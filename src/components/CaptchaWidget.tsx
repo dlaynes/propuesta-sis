@@ -64,7 +64,7 @@ export function CaptchaWidget({ value, onChange }: CaptchaWidgetProps) {
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Ingrese el código captcha de la izquierda"
+          placeholder="Ingrese el código CAPTCHA"
           className="flex-1 min-w-[220px] border border-sis-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
         />
       </div>

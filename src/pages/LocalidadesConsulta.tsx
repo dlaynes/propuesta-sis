@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HeroBanner } from '../components/HeroBanner';
 import { Search, RotateCcw, TrendingUp, Users, TreePine, BarChart3, Download } from 'lucide-react';
 
@@ -113,6 +114,7 @@ const rows = [
 ];
 
 export default function LocalidadesConsulta() {
+  const navigate = useNavigate();
   const [nombre, setNombre] = useState('');
 
   return (
@@ -124,7 +126,7 @@ export default function LocalidadesConsulta() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
-        <div className="flex flex-row sm:flex-col flex-wrap gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-6">
           {stats.map((s) => (
             <div
               key={s.title}
@@ -142,14 +144,22 @@ export default function LocalidadesConsulta() {
           ))}
         </div>
 
-        <div className="text-center">
-          <button className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors">
+        <div className="text-center mb-6 flex justify-center gap-2">
+          <button
+            onClick={() => navigate('/localidades/estadisticas')}
+            className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-4 rounded transition-colors"
+          >
             Ver más datos estadísticos
+          </button>
+
+          <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-2 px-4 rounded transition-colors flex items-center gap-1.5">
+            <Download className="w-3.5 h-3.5" />
+            Descargar Reporte Completo
           </button>
         </div>
 
         {/* Search filters */}
-        <div className="bg-white rounded-lg border border-sis-border p-6 mt-6 mb-6">
+        <div className="bg-white rounded-lg border border-sis-border p-6 mb-6">
           <div className="flex items-center gap-2 text-sis-navy font-semibold mb-4">
             <Search className="w-4 h-4 text-sis-red" />
             <span>Buscador de Localidades</span>
@@ -213,10 +223,6 @@ export default function LocalidadesConsulta() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-sis-text-light">Mostrando 1-10 de 2,847 resultados</span>
-              <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-1.5 px-3 rounded text-sm transition-colors flex items-center gap-1.5">
-                <Download className="w-3.5 h-3.5" />
-                Exportar
-              </button>
             </div>
           </div>
 
@@ -277,7 +283,10 @@ export default function LocalidadesConsulta() {
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <button className="text-sis-navy hover:text-sis-link text-xs font-medium underline">
+                      <button
+                        onClick={() => navigate('/localidades/detalle')}
+                        className="text-sis-navy hover:text-sis-link text-xs font-medium underline"
+                      >
                         Ver
                       </button>
                     </td>

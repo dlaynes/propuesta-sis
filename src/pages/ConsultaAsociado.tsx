@@ -79,15 +79,17 @@ export default function ConsultaAsociado() {
                   </div>
                 </div>
 
-                <CaptchaWidget value={captchaValue} onChange={setCaptchaValue} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <CaptchaWidget value={captchaValue} onChange={setCaptchaValue} />
 
-                <div className="text-center">
-                  <button
-                    type="submit"
-                    className="bg-sis-orange hover:bg-sis-orange-hover text-white font-semibold py-2.5 px-8 rounded transition-colors"
-                  >
-                    Realizar búsqueda
-                  </button>
+                  <div className="text-center mt-8 md:mt-2">
+                    <button
+                      type="submit"
+                      className="bg-sis-orange mt-6 w-full hover:bg-sis-orange-hover text-white font-semibold py-1.5 px-6 rounded transition-colors"
+                    >
+                      Realizar búsqueda
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
