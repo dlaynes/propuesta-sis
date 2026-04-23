@@ -4,7 +4,6 @@ import { HeroBanner } from '../components/HeroBanner';
 import {
   BarChart3,
   Download,
-  ChevronDown,
   MapPin,
   Users,
   BookOpen,
@@ -273,7 +272,6 @@ export default function LocalidadesEstadisticas() {
             </table>
           </div>
         </div>
-
 
         {/* Pueblo indigena table */}
         <div className="bg-white rounded-lg border border-sis-border p-6 mb-8">

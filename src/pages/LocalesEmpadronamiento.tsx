@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
-import { Search, List, MapPin, ChevronDown, RotateCcw, Calendar, Mail, MapPinned, Phone, MapPinHouse } from 'lucide-react';
+import { List, MapPin, ChevronDown, RotateCcw, Calendar, Mail, MapPinned, Phone, MapPinHouse, Download, Search } from 'lucide-react';
 
 const localidades = [
   {
@@ -66,8 +66,7 @@ export default function LocalesEmpadronamiento() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Filters */}
         <div className="bg-white rounded-lg border border-sis-border p-6 mb-6">
-          <div className="flex items-center gap-2 text-sis-navy font-semibold mb-4">
-            <ChevronDown className="w-4 h-4 text-sis-red" />
+          <div className="text-sis-navy font-semibold mb-4">
             <span>Filtros de Búsqueda</span>
           </div>
 
@@ -91,7 +90,7 @@ export default function LocalesEmpadronamiento() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Buscar por localidad</label>
+              <label className="block text-sm font-semibold text-sis-navy mb-1">Nombre de localidad</label>
               <div className="flex">
                 <input
                   type="text"
@@ -100,20 +99,25 @@ export default function LocalesEmpadronamiento() {
                   placeholder="Nombre de localidad..."
                   className="flex-1 border border-sis-border rounded-l px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
                 />
-                <button className="bg-sis-red text-white px-3 rounded-r hover:bg-sis-red-hover transition-colors">
-                  <Search className="w-4 h-4" />
-                </button>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-3 mt-4">
-            <button className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors">
-              Buscar
-            </button>
-            <button className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Limpiar filtros
+          <div className="flex gap-3 mt-4 justify-between items-center">
+            <div className="flex gap-3 mt-4">
+              <button className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors flex direction-row items-center gap-1.5">
+                <Search className="w-4 h-4 mr-1.5" />
+                Buscar
+              </button>
+              <button className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Limpiar filtros
+              </button>            
+            </div>
+
+            <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-1.5">
+              <Download className="w-3.5 h-3.5" />
+              Descargar listado de locales de empadronamiento
             </button>
           </div>
         </div>
@@ -161,12 +165,12 @@ export default function LocalesEmpadronamiento() {
               <div key={loc.codigo} className="bg-white rounded-lg border border-sis-border p-5 relative">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="bg-sis-red text-white text-xs font-bold px-2 py-0.5 rounded">
+                    <span className="bg-sis-green text-white text-xs font-bold px-2 py-0.5 rounded">
                       {loc.codigo}
                     </span>
                     <h3 className="font-bold text-sis-navy">{loc.nombre}</h3>
                   </div>
-                  <a href="#" className="text-sm text-sis-red hover:underline flex items-center gap-1 shrink-0">
+                  <a href="#" className="text-sm text-sis-sky-blue hover:underline flex items-center gap-1 shrink-0">
                     <MapPin className="w-3.5 h-3.5" />
                     Ver en mapa
                   </a>
