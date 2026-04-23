@@ -26,12 +26,12 @@ export function CaptchaWidget({ value, onChange }: CaptchaWidgetProps) {
     <div className="space-y-2">
       <div className="flex items-center gap-1 text-sm font-semibold text-sis-navy">
         <span>Verificación de Seguridad (CAPTCHA)</span>
-        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-sis-navy text-[10px] cursor-help" title="Ingrese el código mostrado">i</span>
+        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-sis-navy text-[10px] cursor-help" title="Ingrese el código mostrado" aria-label="Información: ingrese el código mostrado en la imagen">i</span>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <div className="bg-gray-200 rounded px-3 py-2 select-none">
+          <div className="bg-gray-200 rounded px-3 py-2 select-none" role="img" aria-label={`Código CAPTCHA: ${code}`}>
             <span className="font-mono text-lg font-bold tracking-widest text-gray-700"
               style={{ textShadow: '1px 1px 0 #bbb, -1px -1px 0 #fff' }}
             >
@@ -61,10 +61,12 @@ export function CaptchaWidget({ value, onChange }: CaptchaWidgetProps) {
         </div>
 
         <input
+          id="captcha-input"
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Ingrese el código CAPTCHA"
+          aria-label="Código CAPTCHA"
           className="flex-1 min-w-[220px] border border-sis-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
         />
       </div>

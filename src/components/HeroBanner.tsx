@@ -8,6 +8,8 @@ export function HeroBanner({ title, subtitle }: HeroBannerProps) {
     <section
       className="relative bg-cover bg-center"
       style={{ backgroundImage: 'url(/fondo.png)' }}
+      role="banner"
+      aria-label={title}
     >
       <div className="bg-sis-navy/75">
         <div className="max-w-7xl mx-auto px-4 py-16 md:py-20 text-center text-white">

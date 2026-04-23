@@ -24,7 +24,7 @@ export function Sidebar() {
   const { pathname } = useLocation();
 
   return (
-    <div className="bg-white rounded-lg border border-sis-border p-5">
+    <div className="bg-white rounded-lg border border-sis-border p-5" role="navigation" aria-label="Enlaces de interés">
       <h4 className="font-bold text-sis-navy mb-4">Enlaces de interés</h4>
       <ul className="space-y-2">
         {links.map((l) => {

@@ -108,13 +108,13 @@ export default function LocalidadesEstadisticas() {
         <div className="bg-white rounded-lg border border-sis-border p-4 mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <span className="text-sm font-semibold text-sis-navy">Filtrar por:</span>
-            <select className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+            <select id="stat-departamento" aria-label="Departamento" className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
               <option>{`Departamento: ${departamento}`}</option>
             </select>
-            <select className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+            <select id="stat-provincia" aria-label="Provincia" className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
               <option>{`Provincia: ${provincia}`}</option>
             </select>
-            <select className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+            <select id="stat-periodo" aria-label="Período" className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
               <option>Período: 2020 - 2026</option>
             </select>
             <button className="bg-sis-red hover:bg-sis-red-hover text-white font-medium py-2 px-4 rounded text-sm transition-colors">
@@ -175,12 +175,12 @@ export default function LocalidadesEstadisticas() {
               {/* Donut simulation */}
               <div className="relative w-40 h-40">
                 <svg viewBox="0 0 36 36" className="w-full h-full">
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1a3a5c" strokeWidth="3.5" strokeDasharray="31.3 68.7" strokeDashoffset="25" xlinkTitle='13' />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" strokeWidth="3.5" strokeDasharray="21.9 78.1" strokeDashoffset="93.3" xlinkTitle='13' />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e07020" strokeWidth="3.5" strokeDasharray="15.6 84.4" strokeDashoffset="171.2" xlinkTitle='13' />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#8b5cf6" strokeWidth="3.5" strokeDasharray="12.5 87.5" strokeDashoffset="156.8" xlinkTitle='13' />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#eab308" strokeWidth="3.5" strokeDasharray="8.2 91.8" strokeDashoffset="244.3" xlinkTitle='13' />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6b7280" strokeWidth="3.5" strokeDasharray="10.4 89.6" strokeDashoffset="332.1" xlinkTitle='13' />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1a3a5c" strokeWidth="3.5" strokeDasharray="31.3 68.7" strokeDashoffset="25" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" strokeWidth="3.5" strokeDasharray="21.9 78.1" strokeDashoffset="93.3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e07020" strokeWidth="3.5" strokeDasharray="15.6 84.4" strokeDashoffset="171.2" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#8b5cf6" strokeWidth="3.5" strokeDasharray="12.5 87.5" strokeDashoffset="156.8" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#eab308" strokeWidth="3.5" strokeDasharray="8.2 91.8" strokeDashoffset="244.3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6b7280" strokeWidth="3.5" strokeDasharray="10.4 89.6" strokeDashoffset="332.1" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-sm font-bold text-sis-navy">2,847</span>
@@ -239,7 +239,7 @@ export default function LocalidadesEstadisticas() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-sis-navy">Distribución por Departamentos</h3>
             <div>
-              <input className="border border-sis-border rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Buscar departamento..." />      
+              <input id="search-departamento" aria-label="Buscar departamento" className="border border-sis-border rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Buscar departamento..." />      
             </div>
           </div>
           <div className="overflow-x-auto">

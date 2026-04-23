@@ -23,11 +23,11 @@ export function TopNav() {
   return (
     <div className="bg-sis-navy text-white">
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-12">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <Heart className="w-5 h-5 fill-white" />
+        <Link to="/" className="flex items-center gap-2 font-bold text-lg" aria-label="SIS - Inicio">
+          <Heart className="w-5 h-5 fill-white" aria-hidden="true" />
           <span>SIS</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-5 text-sm">
+        <nav className="hidden md:flex items-center gap-5 text-sm" aria-label="Portales">
           {topLinks.map((l) => (
             <a key={l.label} href={l.href} className="hover:text-sis-orange transition-colors">
               {l.label}
@@ -48,11 +48,13 @@ export function MainNav() {
         <button
           className="md:hidden text-white py-3 flex items-center gap-2"
           onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
         >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {open ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
           <span className="text-sm">Menú</span>
         </button>
-        <nav className={`md:flex items-center gap-1 text-sm text-white ${open ? 'block pb-4' : 'hidden'}`}>
+        <nav aria-label="Navegación principal" className={`md:flex items-center gap-1 text-sm text-white ${open ? 'block pb-4' : 'hidden'}`}>
           {mainLinks.map((l) => (
             l.to.startsWith('#') ? (
               <a

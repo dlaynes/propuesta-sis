@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
-import { List, MapPin, ChevronDown, RotateCcw, Calendar, Mail, MapPinned, Phone, MapPinHouse, Download, Search } from 'lucide-react';
+import { List, MapPin, RotateCcw, Calendar, Mail, MapPinned, Phone, MapPinHouse, Download, Search } from 'lucide-react';
 
 const localidades = [
   {
@@ -51,9 +51,9 @@ const localidades = [
 ];
 
 export default function LocalesEmpadronamiento() {
-  const [region] = useState('Lima');
-  const [provincia] = useState('Lima');
-  const [distrito] = useState('Cercado de Lima');
+  const region = 'Lima';
+  const provincia = 'Lima';
+  const distrito = 'Cercado de Lima';
   const [busqueda, setBusqueda] = useState('');
 
   return (
@@ -72,27 +72,28 @@ export default function LocalesEmpadronamiento() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Región</label>
-              <select className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+              <label htmlFor="filter-region" className="block text-sm font-semibold text-sis-navy mb-1">Región</label>
+              <select id="filter-region" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
                 <option>{`-- ${region} --`}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Provincia</label>
-              <select className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+              <label htmlFor="filter-provincia" className="block text-sm font-semibold text-sis-navy mb-1">Provincia</label>
+              <select id="filter-provincia" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
                 <option>{`-- ${provincia} --`}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Distrito</label>
-              <select className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+              <label htmlFor="filter-distrito" className="block text-sm font-semibold text-sis-navy mb-1">Distrito</label>
+              <select id="filter-distrito" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
                 <option>{`-- ${distrito} --`}</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Nombre de localidad</label>
+              <label htmlFor="filter-nombre" className="block text-sm font-semibold text-sis-navy mb-1">Nombre de localidad</label>
               <div className="flex">
                 <input
+                  id="filter-nombre"
                   type="text"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
@@ -105,7 +106,7 @@ export default function LocalesEmpadronamiento() {
 
           <div className="flex gap-3 mt-4 justify-between items-center">
             <div className="flex gap-3 mt-4">
-              <button className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors flex direction-row items-center gap-1.5">
+              <button className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-1.5">
                 <Search className="w-4 h-4 mr-1.5" />
                 Buscar
               </button>

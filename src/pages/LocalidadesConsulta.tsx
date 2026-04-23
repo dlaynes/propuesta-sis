@@ -167,8 +167,9 @@ export default function LocalidadesConsulta() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Nombre de localidad</label>
+              <label htmlFor="loc-nombre" className="block text-sm font-semibold text-sis-navy mb-1">Nombre de localidad</label>
               <input
+                id="loc-nombre"
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
@@ -177,26 +178,26 @@ export default function LocalidadesConsulta() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Pueblo Indígena</label>
-              <select className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+              <label htmlFor="loc-pueblo" className="block text-sm font-semibold text-sis-navy mb-1">Pueblo Indígena</label>
+              <select id="loc-pueblo" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
                 <option>Todos</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Educación Bilingüe (EIB)</label>
-              <select className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+              <label htmlFor="loc-eib" className="block text-sm font-semibold text-sis-navy mb-1">Educación Bilingüe (EIB)</label>
+              <select id="loc-eib" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
                 <option>Todos</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Tipo de Localidad</label>
-              <select className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+              <label htmlFor="loc-tipo" className="block text-sm font-semibold text-sis-navy mb-1">Tipo de Localidad</label>
+              <select id="loc-tipo" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
                 <option>Todos</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-sis-navy mb-1">Titulada</label>
-              <select className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
+              <label htmlFor="loc-titulada" className="block text-sm font-semibold text-sis-navy mb-1">Titulada</label>
+              <select id="loc-titulada" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
                 <option>Todos</option>
               </select>
             </div>
@@ -300,7 +301,7 @@ export default function LocalidadesConsulta() {
           <div className="flex items-center justify-between mt-4 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-sis-text-light">Filas por página</span>
-              <select className="border border-sis-border rounded px-2 py-1 text-sm bg-white">
+              <select id="rows-per-page" aria-label="Filas por página" className="border border-sis-border rounded px-2 py-1 text-sm bg-white">
                 <option>10</option>
                 <option>25</option>
                 <option>50</option>

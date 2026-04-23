@@ -54,8 +54,9 @@ export default function ConsultaAsociado() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-semibold text-sis-navy mb-1">Tipo de Documento</label>
+                    <label htmlFor="doc-type" className="block text-sm font-semibold text-sis-navy mb-1">Tipo de Documento</label>
                     <select
+                      id="doc-type"
                       value={docType}
                       onChange={(e) => setDocType(e.target.value)}
                       className="w-full border border-sis-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30 bg-white"
@@ -68,8 +69,9 @@ export default function ConsultaAsociado() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-sis-navy mb-1">Número de Documento</label>
+                    <label htmlFor="doc-number" className="block text-sm font-semibold text-sis-navy mb-1">Número de Documento</label>
                     <input
+                      id="doc-number"
                       type="text"
                       value={docNumber}
                       onChange={(e) => setDocNumber(e.target.value)}
