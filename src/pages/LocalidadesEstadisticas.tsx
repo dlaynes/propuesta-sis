@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import {
   BarChart3,
@@ -10,6 +10,12 @@ import {
   GraduationCap,
   ArrowLeft,
 } from 'lucide-react';
+import type { Province, District } from '../types/ubigeo';
+import {
+  getAllDepartments,
+  getProvincesByDepartmentId,
+  getDistrictsByProvinceId,
+} from '../services/ubigeoService';
 
 const resumenCards = [
   {
@@ -69,8 +75,36 @@ const pueblosRows = [
 
 export default function LocalidadesEstadisticas() {
   const navigate = useNavigate();
-  const [provincia] = useState('Todos');
-  const [departamento] = useState('Todos');
+  const departments = useMemo(() => getAllDepartments(), []);
+
+  const [departmentId, setDepartmentId] = useState('');
+  const [provinceId, setProvinceId] = useState('');
+  const [districtId, setDistrictId] = useState('');
+
+  const provinces = useMemo<Province[]>(() => {
+    if (!departmentId) return [];
+    return getProvincesByDepartmentId(departmentId);
+  }, [departmentId]);
+
+  const districts = useMemo<District[]>(() => {
+    if (!provinceId) return [];
+    return getDistrictsByProvinceId(provinceId);
+  }, [provinceId]);
+
+  function handleDepartmentChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setDepartmentId(e.target.value);
+    setProvinceId('');
+    setDistrictId('');
+  }
+
+  function handleProvinceChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setProvinceId(e.target.value);
+    setDistrictId('');
+  }
+
+  function handleDistrictChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setDistrictId(e.target.value);
+  }
 
   return (
     <>
@@ -106,13 +140,45 @@ export default function LocalidadesEstadisticas() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg border border-sis-border p-4 mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-wrap">
             <span className="text-sm font-semibold text-sis-navy">Filtrar por:</span>
-            <select id="stat-departamento" aria-label="Departamento" className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-              <option>{`Departamento: ${departamento}`}</option>
+            <select
+              id="stat-departamento"
+              aria-label="Departamento"
+              value={departmentId}
+              onChange={handleDepartmentChange}
+              className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
+            >
+              <option value="">-- Todos los Departamentos --</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
             </select>
-            <select id="stat-provincia" aria-label="Provincia" className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-              <option>{`Provincia: ${provincia}`}</option>
+            <select
+              id="stat-provincia"
+              aria-label="Provincia"
+              value={provinceId}
+              onChange={handleProvinceChange}
+              disabled={!departmentId}
+              className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30 disabled:bg-gray-100 disabled:text-gray-400"
+            >
+              <option value="">-- Todas las Provincias --</option>
+              {provinces.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <select
+              id="stat-distrito"
+              aria-label="Distrito"
+              value={districtId}
+              onChange={handleDistrictChange}
+              disabled={!provinceId}
+              className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30 disabled:bg-gray-100 disabled:text-gray-400"
+            >
+              <option value="">-- Todos los Distritos --</option>
+              {districts.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
             </select>
             <select id="stat-periodo" aria-label="Período" className="border border-sis-border rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
               <option>Período: 2020 - 2026</option>

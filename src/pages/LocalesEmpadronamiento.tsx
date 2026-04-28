@@ -1,8 +1,24 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import { List, MapPin, RotateCcw, Calendar, Mail, MapPinned, Phone, MapPinHouse, Download, Search } from 'lucide-react';
+import type { Province, District } from '../types/ubigeo';
+import {
+  getAllDepartments,
+  getProvincesByDepartmentId,
+  getDistrictsByProvinceId,
+} from '../services/ubigeoService';
 
-const localidades = [
+interface Local {
+  codigo: string;
+  nombre: string;
+  dias: string;
+  correo: string;
+  referencia: string;
+  telefono: string;
+  direccion: string;
+}
+
+const allLocalidades: Local[] = [
   {
     codigo: 'ULE-001',
     nombre: 'Agencia Lima Centro - Sede Principal',
@@ -51,10 +67,76 @@ const localidades = [
 ];
 
 export default function LocalesEmpadronamiento() {
-  const region = 'Lima';
-  const provincia = 'Lima';
-  const distrito = 'Cercado de Lima';
+  const departments = useMemo(() => getAllDepartments(), []);
+
+  const [departmentId, setDepartmentId] = useState('');
+  const [provinceId, setProvinceId] = useState('');
+  const [districtId, setDistrictId] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [resultados, setResultados] = useState<Local[]>(allLocalidades);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const provinces = useMemo<Province[]>(() => {
+    if (!departmentId) return [];
+    return getProvincesByDepartmentId(departmentId);
+  }, [departmentId]);
+
+  const districts = useMemo<District[]>(() => {
+    if (!provinceId) return [];
+    return getDistrictsByProvinceId(provinceId);
+  }, [provinceId]);
+
+  const selectedDepartment = departments.find((d) => d.id === departmentId);
+  const selectedProvince = provinces.find((p) => p.id === provinceId);
+  const selectedDistrict = districts.find((d) => d.id === districtId);
+
+  function handleDepartmentChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setDepartmentId(id);
+    setProvinceId('');
+    setDistrictId('');
+  }
+
+  function handleProvinceChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const id = e.target.value;
+    setProvinceId(id);
+    setDistrictId('');
+  }
+
+  function handleDistrictChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setDistrictId(e.target.value);
+  }
+
+  function handleLimpiar() {
+    setDepartmentId('');
+    setProvinceId('');
+    setDistrictId('');
+    setBusqueda('');
+    setResultados(allLocalidades);
+    setHasSearched(false);
+  }
+
+  function handleBuscar() {
+    let filtered = allLocalidades;
+
+    if (busqueda.trim()) {
+      const q = busqueda.trim().toLowerCase();
+      filtered = filtered.filter((l) =>
+        l.nombre.toLowerCase().includes(q) ||
+        l.direccion.toLowerCase().includes(q) ||
+        l.referencia.toLowerCase().includes(q)
+      );
+    }
+
+    // In a real app, department/province/district would also filter.
+    // For now the mock data is all Lima only, so we just note the filter.
+    setResultados(filtered);
+    setHasSearched(true);
+  }
+
+  const locationText = [selectedDepartment?.name, selectedProvince?.name, selectedDistrict?.name]
+    .filter(Boolean)
+    .join(' - ') || 'Todo el Perú';
 
   return (
     <>
@@ -73,20 +155,46 @@ export default function LocalesEmpadronamiento() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
               <label htmlFor="filter-region" className="block text-sm font-semibold text-sis-navy mb-1">Región</label>
-              <select id="filter-region" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-                <option>{`-- ${region} --`}</option>
+              <select
+                id="filter-region"
+                value={departmentId}
+                onChange={handleDepartmentChange}
+                className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
+              >
+                <option value="">-- Seleccione Región --</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
               </select>
             </div>
             <div>
               <label htmlFor="filter-provincia" className="block text-sm font-semibold text-sis-navy mb-1">Provincia</label>
-              <select id="filter-provincia" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-                <option>{`-- ${provincia} --`}</option>
+              <select
+                id="filter-provincia"
+                value={provinceId}
+                onChange={handleProvinceChange}
+                disabled={!departmentId}
+                className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30 disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                <option value="">-- Seleccione Provincia --</option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
               </select>
             </div>
             <div>
               <label htmlFor="filter-distrito" className="block text-sm font-semibold text-sis-navy mb-1">Distrito</label>
-              <select id="filter-distrito" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-                <option>{`-- ${distrito} --`}</option>
+              <select
+                id="filter-distrito"
+                value={districtId}
+                onChange={handleDistrictChange}
+                disabled={!provinceId}
+                className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30 disabled:bg-gray-100 disabled:text-gray-400"
+              >
+                <option value="">-- Seleccione Distrito --</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -106,14 +214,20 @@ export default function LocalesEmpadronamiento() {
 
           <div className="flex gap-3 mt-4 justify-between items-center">
             <div className="flex gap-3 mt-4">
-              <button className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-1.5">
+              <button
+                onClick={handleBuscar}
+                className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-1.5"
+              >
                 <Search className="w-4 h-4 mr-1.5" />
                 Buscar
               </button>
-              <button className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2">
+              <button
+                onClick={handleLimpiar}
+                className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2"
+              >
                 <RotateCcw className="w-4 h-4" />
                 Limpiar filtros
-              </button>            
+              </button>
             </div>
 
             <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-1.5">
@@ -128,7 +242,9 @@ export default function LocalesEmpadronamiento() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-sis-red"></span>
             <span className="text-sm font-medium text-sis-navy">
-              Se encontraron 5 locales de empadronamiento en Lima - Lima - Cercado de Lima
+              {hasSearched
+                ? `Se encontraron ${resultados.length} local${resultados.length === 1 ? '' : 'es'} de empadronamiento en ${locationText}`
+                : `Mostrando ${resultados.length} locales de empadronamiento en ${locationText}`}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -162,60 +278,66 @@ export default function LocalesEmpadronamiento() {
 
           {/* Cards list */}
           <div className="lg:col-span-3 space-y-4">
-            {localidades.map((loc) => (
-              <div key={loc.codigo} className="bg-white rounded-lg border border-sis-border p-5 relative">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-sis-green text-white text-xs font-bold px-2 py-0.5 rounded">
-                      {loc.codigo}
-                    </span>
-                    <h3 className="font-bold text-sis-navy">{loc.nombre}</h3>
-                  </div>
-                  <a href="#" className="text-sm text-sis-sky-blue hover:underline flex items-center gap-1 shrink-0">
-                    <MapPin className="w-3.5 h-3.5" />
-                    Ver en mapa
-                  </a>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-sis-navy">Días de atención:</span>{' '}
-                      <span className="text-sis-text-light">{loc.dias}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-sis-navy">Teléfono:</span>{' '}
-                      <span className="text-sis-text-light">{loc.telefono}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Mail className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-sis-navy">Correo:</span>{' '}
-                      <span className="text-sis-text-light">{loc.correo}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPinHouse className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-sis-navy">Dirección:</span>{' '}
-                      <span className="text-sis-text-light">{loc.direccion}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2 md:col-span-2">
-                    <MapPinned className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-sis-navy">Referencia:</span>{' '}
-                      <span className="text-sis-text-light">{loc.referencia}</span>
-                    </div>
-                  </div>
-                </div>
+            {resultados.length === 0 ? (
+              <div className="bg-white rounded-lg border border-sis-border p-8 text-center">
+                <p className="text-sis-text-light text-sm">No se encontraron locales para los filtros seleccionados.</p>
               </div>
-            ))}
+            ) : (
+              resultados.map((loc) => (
+                <div key={loc.codigo} className="bg-white rounded-lg border border-sis-border p-5 relative">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-sis-green text-white text-xs font-bold px-2 py-0.5 rounded">
+                        {loc.codigo}
+                      </span>
+                      <h3 className="font-bold text-sis-navy">{loc.nombre}</h3>
+                    </div>
+                    <a href="#" className="text-sm text-sis-sky-blue hover:underline flex items-center gap-1 shrink-0">
+                      <MapPin className="w-3.5 h-3.5" />
+                      Ver en mapa
+                    </a>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-sm">
+                    <div className="flex items-start gap-2">
+                      <Calendar className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-sis-navy">Días de atención:</span>{' '}
+                        <span className="text-sis-text-light">{loc.dias}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Phone className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-sis-navy">Teléfono:</span>{' '}
+                        <span className="text-sis-text-light">{loc.telefono}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Mail className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-sis-navy">Correo:</span>{' '}
+                        <span className="text-sis-text-light">{loc.correo}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPinHouse className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-sis-navy">Dirección:</span>{' '}
+                        <span className="text-sis-text-light">{loc.direccion}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2 md:col-span-2">
+                      <MapPinned className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold text-sis-navy">Referencia:</span>{' '}
+                        <span className="text-sis-text-light">{loc.referencia}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
