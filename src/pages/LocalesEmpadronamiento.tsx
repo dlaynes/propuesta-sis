@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import { List, MapPin, RotateCcw, Calendar, Mail, MapPinned, Phone, MapPinHouse, Download, Search } from 'lucide-react';
 import type { Province, District } from '../types/ubigeo';
@@ -6,7 +6,11 @@ import {
   getAllDepartments,
   getProvincesByDepartmentId,
   getDistrictsByProvinceId,
+  findDistrictById,
 } from '../services/ubigeoService';
+import { getAllUleRecords } from '../services/uleService';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 
 interface Local {
   codigo: string;
@@ -16,65 +20,87 @@ interface Local {
   referencia: string;
   telefono: string;
   direccion: string;
+  ubigeo?: string;
+  departamento?: string;
+  provincia?: string;
+  distrito?: string;
+  lat?: number;
+  lng?: number;
 }
 
-const allLocalidades: Local[] = [
-  {
-    codigo: 'ULE-001',
-    nombre: 'Agencia Lima Centro - Sede Principal',
-    dias: 'Lunes a Viernes, 8:00 - 17:00',
-    correo: 'ule.limacentro@reniec.gob.pe',
-    referencia: 'A una cuadra de la Av. Abancay, frente al Parque Universitario',
-    telefono: '(01) 315-4000 Anexo 1201',
-    direccion: 'Jr. Bolivia 109, Cercado de Lima',
-  },
-  {
-    codigo: 'ULE-002',
-    nombre: 'Agencia Jirón de la Unión',
-    dias: 'Lunes a Sábado, 8:30 - 16:30',
+function createUleIcon() {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `\u003cdiv style="background-color:#e07020;width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4);"\u003e\u003c/div\u003e`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -8],
+  });
+}
+
+function MapUpdater({ results }: { results: Local[] }) {
+  const map = useMap();
+  const valid = results.filter((r) => r.lat !== undefined && r.lng !== undefined && r.lat !== 0 && r.lng !== 0);
+  if (valid.length > 0) {
+    const group = L.featureGroup(valid.map((r) => L.marker([r.lat!, r.lng!])));
+    map.fitBounds(group.getBounds().pad(0.05));
+  }
+  return null;
+}
+
+interface MapFocusProps {
+  target: Local | null;
+  markerRefs: React.RefObject<Map<string, L.Marker> | null>;
+  onDone: () => void;
+}
+
+function MapFocus({ target, markerRefs, onDone }: MapFocusProps) {
+  const map = useMap();
+
+  useMemo(() => {
+    if (!target || !markerRefs?.current) return;
+    const marker = markerRefs.current.get(target.codigo);
+    if (marker && target.lat && target.lng) {
+      map.flyTo([target.lat, target.lng], 15, { duration: 1.5 });
+      marker.openPopup();
+    }
+    onDone();
+  }, [target, markerRefs, map, onDone]);
+
+  return null;
+}
+
+const allLocalidades: Local[] = getAllUleRecords().map((r) => {
+  const district = findDistrictById(r.ubigeo);
+  return {
+    codigo: `ULE-${r.ubigeo}`,
+    nombre: `${r.distrito} — ${r.provincia}, ${r.departamento}`,
+    dias: r.dias_atencion,
     correo: 'No disponible',
-    referencia: 'Entre Jr. Camaná y Jr. Callao, cerca de la Plaza San Martín',
-    telefono: '(01) 315-4000 Anexo 1305',
-    direccion: 'Jr. de la Unión 630, Cercado de Lima',
-  },
-  {
-    codigo: 'ULE-003',
-    nombre: 'Agencia Barrios Altos',
-    dias: 'Lunes a Viernes, 9:00 - 16:00',
-    correo: 'ule.barriosaltos@reniec.gob.pe',
-    referencia: 'A dos cuadras del Mercado Central, frente a la Iglesia de las Nazarenas',
-    telefono: '(01) 315-4000 Anexo 1410',
-    direccion: 'Jr. Ancash 1290, Cercado de Lima',
-  },
-  {
-    codigo: 'ULE-004',
-    nombre: 'Agencia Monserrate',
-    dias: 'Lunes a Viernes, 8:00 - 15:30',
-    correo: 'No disponible',
-    referencia: 'Al costado de la Iglesia de Monserrate, cerca de la Av. Tacna',
+    referencia: r.referencia,
     telefono: 'No disponible',
-    direccion: 'Jr. Camaná 370, Cercado de Lima',
-  },
-  {
-    codigo: 'ULE-005',
-    nombre: 'Agencia Rímac - Puente de Piedra',
-    dias: 'Lunes a Viernes, 8:30 - 16:00',
-    correo: 'ule.rimac@reniec.gob.pe',
-    referencia: 'A media cuadra del Puente de Piedra, frente a la Alameda de los Descalzos',
-    telefono: '(01) 315-4000 Anexo 1520',
-    direccion: 'Jr. Trujillo 618, Cercado de Lima',
-  },
-];
+    direccion: r.direccion_ule,
+    ubigeo: r.ubigeo,
+    departamento: r.departamento,
+    provincia: r.provincia,
+    distrito: r.distrito,
+    lat: district?.lat,
+    lng: district?.lng,
+  };
+});
 
 export default function LocalesEmpadronamiento() {
   const departments = useMemo(() => getAllDepartments(), []);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markerRefs = useRef<Map<string, L.Marker>>(new Map());
 
   const [departmentId, setDepartmentId] = useState('');
   const [provinceId, setProvinceId] = useState('');
   const [districtId, setDistrictId] = useState('');
   const [busqueda, setBusqueda] = useState('');
-  const [resultados, setResultados] = useState<Local[]>(allLocalidades);
+  const [resultados, setResultados] = useState<Local[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [focusLoc, setFocusLoc] = useState<Local | null>(null);
 
   const provinces = useMemo<Province[]>(() => {
     if (!departmentId) return [];
@@ -90,53 +116,74 @@ export default function LocalesEmpadronamiento() {
   const selectedProvince = provinces.find((p) => p.id === provinceId);
   const selectedDistrict = districts.find((d) => d.id === districtId);
 
-  function handleDepartmentChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  const handleDepartmentChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setDepartmentId(id);
     setProvinceId('');
     setDistrictId('');
-  }
+  }, []);
 
-  function handleProvinceChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  const handleProvinceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setProvinceId(id);
     setDistrictId('');
-  }
+  }, []);
 
-  function handleDistrictChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  const handleDistrictChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     setDistrictId(e.target.value);
-  }
+  }, []);
 
   function handleLimpiar() {
     setDepartmentId('');
     setProvinceId('');
     setDistrictId('');
     setBusqueda('');
-    setResultados(allLocalidades);
+    setResultados([]);
     setHasSearched(false);
+    setFocusLoc(null);
   }
 
   function handleBuscar() {
     let filtered = allLocalidades;
+
+    if (departmentId && selectedDepartment) {
+      const deptName = selectedDepartment.name.toUpperCase();
+      filtered = filtered.filter((l) => l.departamento?.toUpperCase() === deptName);
+    }
+    if (provinceId && selectedProvince) {
+      const provName = selectedProvince.name.toUpperCase();
+      filtered = filtered.filter((l) => l.provincia?.toUpperCase() === provName);
+    }
+    if (districtId && selectedDistrict) {
+      const distName = selectedDistrict.name.toUpperCase();
+      filtered = filtered.filter((l) => l.distrito?.toUpperCase() === distName);
+    }
 
     if (busqueda.trim()) {
       const q = busqueda.trim().toLowerCase();
       filtered = filtered.filter((l) =>
         l.nombre.toLowerCase().includes(q) ||
         l.direccion.toLowerCase().includes(q) ||
-        l.referencia.toLowerCase().includes(q)
+        l.referencia.toLowerCase().includes(q) ||
+        l.codigo.toLowerCase().includes(q)
       );
     }
 
-    // In a real app, department/province/district would also filter.
-    // For now the mock data is all Lima only, so we just note the filter.
     setResultados(filtered);
     setHasSearched(true);
+    setFocusLoc(null);
+  }
+
+  function handleVerEnMapa(loc: Local) {
+    setFocusLoc(loc);
+    mapContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   const locationText = [selectedDepartment?.name, selectedProvince?.name, selectedDistrict?.name]
     .filter(Boolean)
     .join(' - ') || 'Todo el Perú';
+
+  const validResults = resultados.filter((r) => r.lat !== undefined && r.lng !== undefined && r.lat !== 0 && r.lng !== 0);
 
   return (
     <>
@@ -149,104 +196,99 @@ export default function LocalesEmpadronamiento() {
         {/* Filters */}
         <div className="bg-white rounded-lg border border-sis-border p-6 mb-6">
           <div className="text-sis-navy font-semibold mb-4">
-            <span>Filtros de Búsqueda</span>
+            <span>Filtros de búsqueda</span>
+            {hasSearched && (
+              <span className="ml-2 text-xs font-normal text-sis-text-light">
+                ({resultados.length} resultados)
+              </span>
+            )}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div>
-              <label htmlFor="filter-region" className="block text-sm font-semibold text-sis-navy mb-1">Región</label>
+              <label className="block text-sm font-semibold text-sis-navy mb-1">Departamento</label>
               <select
-                id="filter-region"
+                className="w-full border border-sis-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30 bg-white"
                 value={departmentId}
                 onChange={handleDepartmentChange}
-                className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
               >
-                <option value="">-- Seleccione Región --</option>
+                <option value="">Todos</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="filter-provincia" className="block text-sm font-semibold text-sis-navy mb-1">Provincia</label>
+              <label className="block text-sm font-semibold text-sis-navy mb-1">Provincia</label>
               <select
-                id="filter-provincia"
+                className="w-full border border-sis-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30 bg-white"
                 value={provinceId}
                 onChange={handleProvinceChange}
                 disabled={!departmentId}
-                className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30 disabled:bg-gray-100 disabled:text-gray-400"
               >
-                <option value="">-- Seleccione Provincia --</option>
+                <option value="">Todos</option>
                 {provinces.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="filter-distrito" className="block text-sm font-semibold text-sis-navy mb-1">Distrito</label>
+              <label className="block text-sm font-semibold text-sis-navy mb-1">Distrito</label>
               <select
-                id="filter-distrito"
+                className="w-full border border-sis-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30 bg-white"
                 value={districtId}
                 onChange={handleDistrictChange}
                 disabled={!provinceId}
-                className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30 disabled:bg-gray-100 disabled:text-gray-400"
               >
-                <option value="">-- Seleccione Distrito --</option>
+                <option value="">Todos</option>
                 {districts.map((d) => (
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="filter-nombre" className="block text-sm font-semibold text-sis-navy mb-1">Nombre de localidad</label>
-              <div className="flex">
+              <label className="block text-sm font-semibold text-sis-navy mb-1">Buscar por nombre o dirección</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 w-4 h-4 text-sis-text-light" aria-hidden="true" />
                 <input
-                  id="filter-nombre"
                   type="text"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Nombre de localidad..."
-                  className="flex-1 border border-sis-border rounded-l px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
+                  placeholder="Ej: Chachapoyas, Plaza de Armas..."
+                  className="w-full border border-sis-border rounded pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
                 />
               </div>
             </div>
           </div>
-
-          <div className="flex gap-3 mt-4 justify-between items-center">
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={handleBuscar}
-                className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-1.5"
-              >
-                <Search className="w-4 h-4 mr-1.5" />
-                Buscar
-              </button>
-              <button
-                onClick={handleLimpiar}
-                className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Limpiar filtros
-              </button>
-            </div>
-
-            <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-1.5">
-              <Download className="w-3.5 h-3.5" />
-              Descargar listado de locales de empadronamiento
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleBuscar}
+              className="bg-sis-orange hover:bg-sis-orange-hover text-white text-sm font-semibold py-2 px-5 rounded transition-colors inline-flex items-center gap-2"
+            >
+              <Search className="w-4 h-4" />
+              Buscar
             </button>
+            <button
+              onClick={handleLimpiar}
+              className="border border-sis-border hover:bg-sis-bg text-sis-text text-sm font-semibold py-2 px-4 rounded transition-colors inline-flex items-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Limpiar
+            </button>
+            <button
+              className="border border-sis-border hover:bg-sis-bg text-sis-text text-sm font-semibold py-2 px-4 rounded transition-colors inline-flex items-center gap-2"
+              title="Descargar resultados"
+            >
+              <Download className="w-4 h-4" />
+              Exportar
+            </button>
+            <div className="ml-auto text-xs text-sis-text-light">
+              {locationText}
+            </div>
           </div>
         </div>
 
-        {/* Results header */}
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-sis-red"></span>
-            <span className="text-sm font-medium text-sis-navy">
-              {hasSearched
-                ? `Se encontraron ${resultados.length} local${resultados.length === 1 ? '' : 'es'} de empadronamiento en ${locationText}`
-                : `Mostrando ${resultados.length} locales de empadronamiento en ${locationText}`}
-            </span>
-          </div>
+        {/* Toolbar */}
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-sis-text-light">Vista:</span>
             <button className="p-1.5 rounded text-sis-red bg-red-50">
@@ -260,25 +302,64 @@ export default function LocalesEmpadronamiento() {
 
         {/* Map + Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Map placeholder */}
-          <div className="lg:col-span-2 bg-gray-100 rounded-lg border border-sis-border h-[500px] flex items-center justify-center relative overflow-hidden">
-            <div className="text-center p-6">
-              <MapPinHouse className="w-16 h-16 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 font-medium">Mapa de ubicaciones</p>
-              <p className="text-xs text-gray-400 mt-1">Requiere API Key de Google Maps</p>
-            </div>
-            {/* Simulated map styling */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none"
-              style={{
-                backgroundImage:
-                  'repeating-linear-gradient(0deg, transparent, transparent 40px, #ccc 40px, #ccc 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, #ccc 40px, #ccc 41px)',
-              }}
-            />
+          {/* Leaflet Map */}
+          <div ref={mapContainerRef} className="lg:col-span-2 bg-white rounded-lg border border-sis-border overflow-hidden h-[500px] relative">
+            <MapContainer
+              center={[-9.19, -75.015]}
+              zoom={5}
+              scrollWheelZoom={true}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {validResults.map((loc) => (
+                <Marker
+                  key={loc.codigo}
+                  position={[loc.lat!, loc.lng!]}
+                  icon={createUleIcon()}
+                  ref={(marker) => {
+                    if (marker) {
+                      markerRefs.current.set(loc.codigo, marker);
+                    }
+                  }}
+                >
+                  <Popup>
+                    <div className="text-sm min-w-[180px]">
+                      <p className="font-bold text-sis-navy mb-1">{loc.nombre}</p>
+                      <p className="text-sis-text-light">{loc.direccion}</p>
+                      <p className="text-sis-text-light mt-1">
+                        <span className="font-medium text-sis-navy">Días:</span> {loc.dias}
+                      </p>
+                      <p className="text-sis-text-light">
+                        <span className="font-medium text-sis-navy">Referencia:</span> {loc.referencia}
+                      </p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+              {hasSearched && validResults.length > 0 && (
+                <MapUpdater results={validResults} />
+              )}
+              <MapFocus
+                target={focusLoc}
+                markerRefs={markerRefs}
+                onDone={() => setFocusLoc(null)}
+              />
+            </MapContainer>
           </div>
 
           {/* Cards list */}
           <div className="lg:col-span-3 space-y-4">
-            {resultados.length === 0 ? (
+            {!hasSearched ? (
+              <div className="bg-white rounded-lg border border-sis-border p-8 text-center">
+                <Search className="w-10 h-10 text-sis-text-light/50 mx-auto mb-3" />
+                <p className="text-sis-text-light text-sm font-medium">
+                  Ingrese los datos del centro y haga clic en Buscar
+                </p>
+              </div>
+            ) : resultados.length === 0 ? (
               <div className="bg-white rounded-lg border border-sis-border p-8 text-center">
                 <p className="text-sis-text-light text-sm">No se encontraron locales para los filtros seleccionados.</p>
               </div>
@@ -292,10 +373,20 @@ export default function LocalesEmpadronamiento() {
                       </span>
                       <h3 className="font-bold text-sis-navy">{loc.nombre}</h3>
                     </div>
-                    <a href="#" className="text-sm text-sis-sky-blue hover:underline flex items-center gap-1 shrink-0">
-                      <MapPin className="w-3.5 h-3.5" />
-                      Ver en mapa
-                    </a>
+                    {loc.lat && loc.lng && loc.lat !== 0 && loc.lng !== 0 ? (
+                      <button
+                        onClick={() => handleVerEnMapa(loc)}
+                        className="text-sm text-sis-sky-blue hover:underline flex items-center gap-1 shrink-0"
+                      >
+                        <MapPin className="w-3.5 h-3.5" />
+                        Ver en mapa
+                      </button>
+                    ) : (
+                      <span className="text-sm text-sis-text-light/60 flex items-center gap-1 shrink-0">
+                        <MapPin className="w-3.5 h-3.5" />
+                        Sin coordenadas
+                      </span>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-sm">

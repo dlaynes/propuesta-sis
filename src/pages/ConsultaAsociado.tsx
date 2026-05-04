@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AlertCircle, Search, UserCheck, FileText, Shield, Activity } from 'lucide-react';
 import { HeroBanner } from '../components/HeroBanner';
 import { Sidebar } from '../components/Sidebar';
 import { CaptchaWidget } from '../components/CaptchaWidget';
@@ -11,18 +12,46 @@ const docTypes = [
   'PTP - Permiso Temporal de Permanencia',
 ];
 
+interface ResultData {
+  fullName: string;
+  docType: string;
+  docNumber: string;
+  affiliationId: string;
+  insuranceType: string;
+  status: string;
+}
+
 export default function ConsultaAsociado() {
   const [docType, setDocType] = useState('');
   const [docNumber, setDocNumber] = useState('');
   const [captchaValue, setCaptchaValue] = useState('');
+  const [result, setResult] = useState<ResultData | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setResult(null);
+    setNotFound(false);
     if (!docType || !docNumber || !captchaValue) {
       alert('Por favor complete todos los campos.');
       return;
     }
-    alert(`Consultando asociado...\nTipo: ${docType}\nNúmero: ${docNumber}`);
+    const trimmed = docNumber.trim();
+    if (!/^\d{8}$/.test(trimmed)) {
+      setNotFound(true);
+      return;
+    }
+    const affiliationId = `100${trimmed}`;
+    const lastDigit = parseInt(affiliationId.slice(-1), 10);
+    const status = lastDigit % 2 === 0 ? 'Habilitado' : 'Cancelado';
+    setResult({
+      fullName: 'JUAN PEREZ GARCIA',
+      docType,
+      docNumber: trimmed,
+      affiliationId,
+      insuranceType: 'SIS GRATUITO',
+      status,
+    });
   };
 
   return (
@@ -94,6 +123,93 @@ export default function ConsultaAsociado() {
                   </div>
                 </div>
               </form>
+
+              {notFound && (
+                <div className="mt-6 rounded-lg border border-sis-red/20 bg-red-50 p-5 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-sis-red shrink-0 mt-0.5" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-semibold text-sis-red">No se encontró información</p>
+                    <p className="text-sm text-sis-text-light mt-1">
+                      No existe registro de asegurado para el documento ingresado. Verifique el número y el tipo, luego vuelva a intentarlo.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {result && (
+                <div className="mt-6 rounded-lg border border-sis-border bg-white overflow-hidden">
+                  <div className="bg-sis-navy/5 px-5 py-3 border-b border-sis-border flex items-center gap-2">
+                    <Search className="w-4 h-4 text-sis-navy" aria-hidden="true" />
+                    <h3 className="text-sm font-semibold text-sis-navy">Resultado de la consulta</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr className="border-b border-sis-border">
+                          <td className="px-5 py-3 bg-sis-bg/50 font-semibold text-sis-navy w-1/3">
+                            <div className="flex items-center gap-2">
+                              <UserCheck className="w-4 h-4" aria-hidden="true" />
+                              Nombres completos
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-sis-text">{result.fullName}</td>
+                        </tr>
+                        <tr className="border-b border-sis-border">
+                          <td className="px-5 py-3 bg-sis-bg/50 font-semibold text-sis-navy w-1/3">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4" aria-hidden="true" />
+                              Tipo y N° de documento
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-sis-text">{result.docType} — {result.docNumber}</td>
+                        </tr>
+                        <tr className="border-b border-sis-border">
+                          <td className="px-5 py-3 bg-sis-bg/50 font-semibold text-sis-navy w-1/3">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-4 h-4" aria-hidden="true" />
+                              ID de afiliación
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-sis-text">{result.affiliationId}</td>
+                        </tr>
+                        <tr className="border-b border-sis-border">
+                          <td className="px-5 py-3 bg-sis-bg/50 font-semibold text-sis-navy w-1/3">
+                            <div className="flex items-center gap-2">
+                              <Shield className="w-4 h-4" aria-hidden="true" />
+                              Tipo de seguro
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-sis-text">{result.insuranceType}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-5 py-3 bg-sis-bg/50 font-semibold text-sis-navy w-1/3">
+                            <div className="flex items-center gap-2">
+                              <Activity className="w-4 h-4" aria-hidden="true" />
+                              Estado
+                            </div>
+                          </td>
+                          <td className="px-5 py-3">
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                                result.status === 'Habilitado'
+                                  ? 'bg-green-50 text-sis-green border border-green-200'
+                                  : 'bg-red-50 text-sis-red border border-red-200'
+                              }`}
+                            >
+                              {result.status === 'Habilitado' ? (
+                                <span className="w-1.5 h-1.5 rounded-full bg-sis-green" />
+                              ) : (
+                                <span className="w-1.5 h-1.5 rounded-full bg-sis-red" />
+                              )}
+                              {result.status}
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
 
             <ContactMethods />

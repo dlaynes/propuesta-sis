@@ -10,9 +10,9 @@ const links: SidebarLink[] = [
   { label: 'Consultas de asegurado', to: '/' },
   { label: 'Pueblos indígenas', to: '/localidades' },
   { label: 'Unidades locales de empadronamiento', to: '/locales' },
-  { label: 'Consultas SIS FOH' },
-  { label: 'Consultas SUSALUD' },
-  { label: 'Establecimientos de salud' },
+  { label: 'Consultas SIS FOH', to: '/consultas-sis-foh' },
+  { label: 'Consultas SUSALUD', to: '/consultas-susalud' },
+  { label: 'Establecimientos de salud', to: '/establecimientos' },
 ];
 
 function isActive(item: SidebarLink, pathname: string) {

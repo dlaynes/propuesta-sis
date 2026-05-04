@@ -19,4 +19,7 @@ export interface District {
   name: string;
   province_id: string;
   department_id: string;
+  lat: number;
+  lng: number;
+  alternate_name?: string; // Optional field for alternate names
 }
