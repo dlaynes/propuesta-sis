@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import {
   BarChart3,
@@ -22,6 +22,10 @@ import {
   computePueblosStats,
   computePoblacionBuckets,
   computeDepartamentoStats,
+  type ResumenStats,
+  type PuebloIndigena,
+  type PoblacionBucket,
+  type DepartamentoStat,
 } from '../types/pueblos_indigenas';
 
 export default function PueblosIndigenasEstadisticas() {
@@ -43,12 +47,26 @@ export default function PueblosIndigenasEstadisticas() {
     return undefined;
   }, [departmentId, provinceId, districtId]);
 
-  const stats = useMemo(() => computeResumenStats(ubigeoPrefix), [ubigeoPrefix]);
-  const pueblosRows = useMemo(() => computePueblosStats(ubigeoPrefix), [ubigeoPrefix]);
-  const poblacionRows = useMemo(() => computePoblacionBuckets(ubigeoPrefix), [ubigeoPrefix]);
-  const deptRows = useMemo(() => computeDepartamentoStats(ubigeoPrefix), [ubigeoPrefix]);
+  const [stats, setStats] = useState<ResumenStats | null>(null);
+  const [pueblosRows, setPueblosRows] = useState<PuebloIndigena[]>([]);
+  const [poblacionRows, setPoblacionRows] = useState<PoblacionBucket[]>([]);
+  const [deptRows, setDeptRows] = useState<DepartamentoStat[]>([]);
 
-  const resumenCards = [
+  useEffect(() => {
+    Promise.all([
+      computeResumenStats(ubigeoPrefix),
+      computePueblosStats(ubigeoPrefix),
+      computePoblacionBuckets(ubigeoPrefix),
+      computeDepartamentoStats(ubigeoPrefix),
+    ]).then(([s, p, pb, d]) => {
+      setStats(s);
+      setPueblosRows(p);
+      setPoblacionRows(pb);
+      setDeptRows(d);
+    });
+  }, [ubigeoPrefix]);
+
+  const resumenCards = !stats ? [] : [
     {
       label: 'Total de Localidades',
       value: stats.totalLocalidades.toLocaleString(),
@@ -127,6 +145,29 @@ export default function PueblosIndigenasEstadisticas() {
     'Bora-Witotoan': 'bg-cyan-500',
     Diversas: 'bg-gray-500',
   };
+
+  if (!stats) {
+    return (
+      <>
+        <HeroBanner
+          title="Estadísticas de Localidades Indígenas"
+          subtitle="Datos actualizados al censo"
+        />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <button
+            onClick={() => navigate('/pueblos-indigenas')}
+            className="text-sis-navy hover:text-sis-link font-medium text-sm mb-8 flex items-center gap-1 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al buscador
+          </button>
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sis-navy"></div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

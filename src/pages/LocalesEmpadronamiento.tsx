@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
-import { List, MapPin, RotateCcw, Calendar, Mail, MapPinned, Phone, MapPinHouse, Download, Search } from 'lucide-react';
+import { List, MapPin, RotateCcw, Calendar, MapPinned, MapPinHouse, Download, Search } from 'lucide-react';
 import type { Province, District } from '../types/ubigeo';
 import {
   getAllDepartments,
@@ -10,6 +10,7 @@ import {
 } from '../services/ubigeoService';
 import { getAllUleRecords } from '../services/uleService';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Pagination } from '../components/Pagination';
 import L from 'leaflet';
 import type { LocalEmpadronamiento } from '../types/local_empadronamiento';
 
@@ -31,6 +32,87 @@ function MapUpdater({ results }: { results: LocalEmpadronamiento[] }) {
     map.fitBounds(group.getBounds().pad(0.05));
   }
   return null;
+}
+
+function normalizeDay(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+const allDays = [
+  { key: 'lunes', label: 'Lu', full: 'Lunes' },
+  { key: 'martes', label: 'Ma', full: 'Martes' },
+  { key: 'miercoles', label: 'Mi', full: 'Miércoles' },
+  { key: 'jueves', label: 'Ju', full: 'Jueves' },
+  { key: 'viernes', label: 'Vi', full: 'Viernes' },
+  { key: 'sabado', label: 'Sá', full: 'Sábado' },
+  { key: 'domingo', label: 'Do', full: 'Domingo' },
+];
+
+function DiasAtencion({ dias }: { dias: string }) {
+
+  const normalized = normalizeDay(dias);
+  const activeIndices = allDays
+    .map((d, i) => (normalized.includes(d.key) ? i : -1))
+    .filter((i) => i !== -1);
+
+  // Build human-readable summary
+  function buildSummary(indices: number[]): string {
+    if (indices.length === 0) return 'No especificado';
+    if (indices.length === 1) return allDays[indices[0]].full;
+
+    // Find contiguous ranges
+    const ranges: [number, number][] = [];
+    let start = indices[0];
+    let end = indices[0];
+    for (let i = 1; i < indices.length; i++) {
+      if (indices[i] === end + 1) {
+        end = indices[i];
+      } else {
+        ranges.push([start, end]);
+        start = indices[i];
+        end = indices[i];
+      }
+    }
+    ranges.push([start, end]);
+
+    const parts = ranges.map(([s, e]) => {
+      if (s === e) return allDays[s].full;
+      if (e === s + 1) return `${allDays[s].full} y ${allDays[e].full}`;
+      return `${allDays[s].full} a ${allDays[e].full}`;
+    });
+
+    if (parts.length === 1) return parts[0];
+    return parts.slice(0, -1).join(', ') + ' y ' + parts[parts.length - 1];
+  }
+
+  const summary = buildSummary(activeIndices);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm text-sis-text-light">{summary}</span>
+      <div className="flex items-center gap-1">
+        {allDays.map((day, idx) => {
+          const isActive = activeIndices.includes(idx);
+          return (
+            <span
+              key={day.key}
+              title={day.full}
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold leading-none select-none ${
+                isActive
+                  ? 'bg-sis-navy text-white'
+                  : 'bg-gray-100 text-gray-300'
+              }`}
+            >
+              {day.label}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 interface MapFocusProps {
@@ -87,6 +169,9 @@ export default function LocalesEmpadronamiento() {
   const [hasSearched, setHasSearched] = useState(false);
   const [focusLoc, setFocusLoc] = useState<LocalEmpadronamiento | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+
   const provinces = useMemo<Province[]>(() => {
     if (!departmentId) return [];
     return getProvincesByDepartmentId(departmentId);
@@ -126,6 +211,7 @@ export default function LocalesEmpadronamiento() {
     setResultados([]);
     setHasSearched(false);
     setFocusLoc(null);
+    setCurrentPage(1);
   }
 
   function handleBuscar() {
@@ -157,6 +243,7 @@ export default function LocalesEmpadronamiento() {
     setResultados(filtered);
     setHasSearched(true);
     setFocusLoc(null);
+    setCurrentPage(1);
   }
 
   function handleVerEnMapa(loc: LocalEmpadronamiento) {
@@ -167,6 +254,12 @@ export default function LocalesEmpadronamiento() {
   const locationText = [selectedDepartment?.name, selectedProvince?.name, selectedDistrict?.name]
     .filter(Boolean)
     .join(' - ') || 'Todo el Perú';
+
+  const totalPages = Math.max(1, Math.ceil(resultados.length / pageSize));
+  const paginatedResults = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return resultados.slice(start, start + pageSize);
+  }, [resultados, currentPage, pageSize]);
 
   const validResults = resultados.filter((r) => r.lat !== undefined && r.lng !== undefined && r.lat !== 0 && r.lng !== 0);
 
@@ -259,10 +352,10 @@ export default function LocalesEmpadronamiento() {
               <RotateCcw className="w-4 h-4" />
               Limpiar
             </button>
-            <button className="bg-sis-navy hover:bg-sis-navy-light text-white text-sm py-2 px-4 rounded transition-colors flex items-center gap-2">
+            <a href="#" className="text-sis-navy text-sm py-2 px-4 rounded transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" />
               Descargar Reporte Completo
-            </button>
+            </a>
             <div className="ml-auto text-xs text-sis-text-light">
               {locationText}
             </div>
@@ -311,9 +404,10 @@ export default function LocalesEmpadronamiento() {
                     <div className="text-sm min-w-[180px]">
                       <p className="font-bold text-sis-navy mb-1">{loc.nombre}</p>
                       <p className="text-sis-text-light">{loc.direccion}</p>
-                      <p className="text-sis-text-light mt-1">
-                        <span className="font-medium text-sis-navy">Días:</span> {loc.dias}
-                      </p>
+                      <div className="text-sis-text-light mt-1">
+                        <span className="font-medium text-sis-navy">Días:</span>
+                        <DiasAtencion dias={loc.dias} />
+                      </div>
                       <p className="text-sis-text-light">
                         <span className="font-medium text-sis-navy">Referencia:</span> {loc.referencia}
                       </p>
@@ -346,7 +440,7 @@ export default function LocalesEmpadronamiento() {
                 <p className="text-sis-text-light text-sm">No se encontraron locales para los filtros seleccionados.</p>
               </div>
             ) : (
-              resultados.map((loc) => (
+              paginatedResults.map((loc) => (
                 <div key={loc.codigo} className="bg-white rounded-lg border border-sis-border p-5 relative">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -375,11 +469,11 @@ export default function LocalesEmpadronamiento() {
                     <div className="flex items-start gap-2">
                       <Calendar className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
                       <div>
-                        <span className="font-semibold text-sis-navy">Días de atención:</span>{' '}
-                        <span className="text-sis-text-light">{loc.dias}</span>
+                        <span className="font-semibold text-sis-navy">Días de atención:</span>
+                        <DiasAtencion dias={loc.dias} />
                       </div>
                     </div>
-                    <div className="flex items-start gap-2">
+                    {/*<div className="flex items-start gap-2">
                       <Phone className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
                       <div>
                         <span className="font-semibold text-sis-navy">Teléfono:</span>{' '}
@@ -392,7 +486,7 @@ export default function LocalesEmpadronamiento() {
                         <span className="font-semibold text-sis-navy">Correo:</span>{' '}
                         <span className="text-sis-text-light">{loc.correo}</span>
                       </div>
-                    </div>
+                    </div>*/}
                     <div className="flex items-start gap-2">
                       <MapPinHouse className="w-4 h-4 text-sis-text-light shrink-0 mt-0.5" />
                       <div>
@@ -410,6 +504,16 @@ export default function LocalesEmpadronamiento() {
                   </div>
                 </div>
               ))
+            )}
+            {hasSearched && resultados.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                pageSize={pageSize}
+                pageSizeOptions={[5,10]}
+                onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+              />
             )}
           </div>
         </div>

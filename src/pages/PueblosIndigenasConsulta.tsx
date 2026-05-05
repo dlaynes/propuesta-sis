@@ -1,17 +1,37 @@
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HeroBanner } from '../components/HeroBanner';
 import { TrendingUp, Users, TreePine, BarChart3, Download } from 'lucide-react';
 import { Tabs } from '../components/Tabs';
 import { Spinner } from '../components/Loader';
-import { computeResumenStats } from '../types/pueblos_indigenas';
+import { computeResumenStats, type ResumenStats } from '../types/pueblos_indigenas';
 
 const Localidades = lazy(() => import('./PueblosIndigenasConsulta/Localidades').then((m) => ({ default: m.Localidades })));
 const CentrosPoblados = lazy(() => import('./PueblosIndigenasConsulta/CentrosPoblados').then((m) => ({ default: m.CentrosPoblados })));
 
 export default function PueblosIndigenasConsulta() {
   const navigate = useNavigate();
-  const stats = useMemo(() => computeResumenStats(), []);
+  const [stats, setStats] = useState<ResumenStats | null>(null);
+
+  useEffect(() => {
+    computeResumenStats().then(setStats);
+  }, []);
+
+  if (!stats) {
+    return (
+      <>
+        <HeroBanner
+          title="Buscador de localidades indígenas"
+          subtitle="Ubica tu localidad cerca a tu ubicación a nivel nacional"
+        />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sis-navy"></div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const cards = [
     {

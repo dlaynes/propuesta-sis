@@ -1,7 +1,3 @@
-import localidadesData from '../data/json/localidades.json';
-import centrosData from '../data/json/centros_poblados.json';
-import departamentosData from '../data/json/ubigeo_peru_2016_departamentos.json';
-
 export interface PuebloIndigena {
   nombre: string;
   familiaLinguistica: string;
@@ -80,7 +76,12 @@ function filterByUbigeoPrefix(
   return records.filter((r) => r[field]?.startsWith(prefix));
 }
 
-export function computeResumenStats(ubigeoPrefix?: string): ResumenStats {
+export async function computeResumenStats(ubigeoPrefix?: string): Promise<ResumenStats> {
+  const [{ default: localidadesData }, { default: centrosData }] = await Promise.all([
+    import('../data/json/localidades.json'),
+    import('../data/json/centros_poblados.json'),
+  ]);
+
   const locs = localidadesData as Array<Record<string, string>>;
   const cps = centrosData as Array<Record<string, string>>;
 
@@ -90,7 +91,7 @@ export function computeResumenStats(ubigeoPrefix?: string): ResumenStats {
   const totalLocalidades = filteredLocs.length;
   const totalCentrosPoblados = filteredCps.length;
   const centrosConPueblo = filteredCps.filter(
-    (r) => r.pueblo_indigena && r.pueblo_indigena.trim() !== ''
+    (r) => r.pueblo_indigena && r.pueblo_indigena.trim() !== '' && r.pueblo_indigena.trim() !== '-'
   ).length;
 
   const pueblosSet = new Set<string>();
@@ -136,7 +137,12 @@ export function computeResumenStats(ubigeoPrefix?: string): ResumenStats {
   };
 }
 
-export function computePueblosStats(ubigeoPrefix?: string): PuebloIndigena[] {
+export async function computePueblosStats(ubigeoPrefix?: string): Promise<PuebloIndigena[]> {
+  const [{ default: localidadesData }, { default: centrosData }] = await Promise.all([
+    import('../data/json/localidades.json'),
+    import('../data/json/centros_poblados.json'),
+  ]);
+
   const locs = localidadesData as Array<Record<string, string>>;
   const cps = centrosData as Array<Record<string, string>>;
 
@@ -184,7 +190,8 @@ export function computePueblosStats(ubigeoPrefix?: string): PuebloIndigena[] {
   return result.sort((a, b) => b.poblacionTotal - a.poblacionTotal);
 }
 
-export function computePoblacionBuckets(ubigeoPrefix?: string): PoblacionBucket[] {
+export async function computePoblacionBuckets(ubigeoPrefix?: string): Promise<PoblacionBucket[]> {
+  const { default: localidadesData } = await import('../data/json/localidades.json');
   const locs = localidadesData as Array<Record<string, string>>;
 
   const filteredLocs = filterByUbigeoPrefix(locs, ubigeoPrefix, 'ubigeo_codigo');
@@ -223,7 +230,13 @@ export function computePoblacionBuckets(ubigeoPrefix?: string): PoblacionBucket[
   });
 }
 
-export function computeDepartamentoStats(ubigeoPrefix?: string): DepartamentoStat[] {
+export async function computeDepartamentoStats(ubigeoPrefix?: string): Promise<DepartamentoStat[]> {
+  const [{ default: localidadesData }, { default: centrosData }, { default: departamentosData }] = await Promise.all([
+    import('../data/json/localidades.json'),
+    import('../data/json/centros_poblados.json'),
+    import('../data/json/ubigeo_peru_2016_departamentos.json'),
+  ]);
+
   const locs = localidadesData as Array<Record<string, string>>;
   const cps = centrosData as Array<Record<string, string>>;
   const depts = departamentosData as Array<{ id: string; name: string }>;
