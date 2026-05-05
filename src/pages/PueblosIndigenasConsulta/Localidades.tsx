@@ -224,7 +224,7 @@ export const Localidades = () => {
                             style={{ width: `${lenguaPct}%`, backgroundColor: getLenguaColor(lenguaPct) }}
                           />
                         </div>
-                        <span className="text-xs text-sis-text-light">{lenguaPct}%</span>
+                        <span className="text-xs text-sis-text-light">{lenguaPct.toFixed(2)}%</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 text-sis-text-light">{row.tipo_de_educacion_impartida_en_la_localidad || 'N/A'}</td>

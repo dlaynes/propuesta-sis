@@ -4,23 +4,47 @@ import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import {
   getAllCentrosPoblados,
-  searchCentrosPobladosByName,
+  
+  getCentroPobladoPueblos,
+  getCentroPobladoTipos,
+  getCentroPobladoEducacionTipos,
 } from '../../services/centroPobladoService';
 import type { CentroPoblado } from '../../types/centro_poblado';
 
 export const CentrosPoblados = () => {
   const [nombre, setNombre] = useState('');
+  const [pueblo, setPueblo] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [educacion, setEducacion] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
 
+  const pueblosOptions = useMemo(() => getCentroPobladoPueblos(), []);
+  const tiposOptions = useMemo(() => getCentroPobladoTipos(), []);
+  const educacionOptions = useMemo(() => getCentroPobladoEducacionTipos(), []);
+
   const filteredRows = useMemo(() => {
-    let result;
-    if (!nombre.trim()) {
-      result = getAllCentrosPoblados();
-    } else {
-      result = searchCentrosPobladosByName(nombre);
+    let result = getAllCentrosPoblados();
+
+    if (nombre.trim()) {
+      result = result.filter((r) =>
+        r.centro_poblado.toLowerCase().includes(nombre.trim().toLowerCase())
+      );
     }
+
+    if (pueblo) {
+      result = result.filter((r) => r.pueblo_indigena === pueblo);
+    }
+
+    if (tipo) {
+      result = result.filter((r) => r.tipo_localidad === tipo);
+    }
+
+    if (educacion) {
+      result = result.filter((r) => r.tipo_de_educacion_impartida_en_el_centro_poblado === educacion);
+    }
+
     // Sort unnamed entries ("-" or empty) to the bottom
     return result.sort((a, b) => {
       const aHasName = a.centro_poblado && a.centro_poblado.trim() !== '' && a.centro_poblado !== '-';
@@ -29,7 +53,7 @@ export const CentrosPoblados = () => {
       if (!aHasName && bHasName) return 1;
       return a.centro_poblado.localeCompare(b.centro_poblado);
     });
-  }, [nombre]);
+  }, [nombre, pueblo, tipo, educacion]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const paginatedRows = useMemo(() => {
@@ -42,6 +66,9 @@ export const CentrosPoblados = () => {
 
   function handleLimpiar() {
     setNombre('');
+    setPueblo('');
+    setTipo('');
+    setEducacion('');
     setCurrentPage(1);
     setPageSize(10);
   }
@@ -84,20 +111,44 @@ export const CentrosPoblados = () => {
           </div>
           <div>
             <label htmlFor="cp-pueblo" className="block text-sm font-semibold text-sis-navy mb-1">Pueblo Indígena</label>
-            <select id="cp-pueblo" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-              <option>Todos</option>
+            <select
+              id="cp-pueblo"
+              value={pueblo}
+              onChange={(e) => setPueblo(e.target.value)}
+              className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
+            >
+              <option value="">Todos</option>
+              {pueblosOptions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
             </select>
           </div>
           <div>
             <label htmlFor="cp-tipo" className="block text-sm font-semibold text-sis-navy mb-1">Tipo de Localidad</label>
-            <select id="cp-tipo" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-              <option>Todos</option>
+            <select
+              id="cp-tipo"
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+              className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
+            >
+              <option value="">Todos</option>
+              {tiposOptions.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
             </select>
           </div>
           <div>
             <label htmlFor="cp-educacion" className="block text-sm font-semibold text-sis-navy mb-1">Educación</label>
-            <select id="cp-educacion" className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30">
-              <option>Todos</option>
+            <select
+              id="cp-educacion"
+              value={educacion}
+              onChange={(e) => setEducacion(e.target.value)}
+              className="w-full border border-sis-border rounded px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
+            >
+              <option value="">Todos</option>
+              {educacionOptions.map((e) => (
+                <option key={e} value={e}>{e}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -176,7 +227,7 @@ export const CentrosPoblados = () => {
                             style={{ width: `${lenguaPct}%`, backgroundColor: getLenguaColor(lenguaPct) }}
                           />
                         </div>
-                        <span className="text-xs text-sis-text-light">{lenguaPct}%</span>
+                        <span className="text-xs text-sis-text-light">{lenguaPct.toFixed(2)}%</span>
                       </div>
                     </td>
                     <td className="px-3 py-3 text-sis-text-light">{row.tipo_de_educacion_impartida_en_el_centro_poblado || 'N/A'}</td>
