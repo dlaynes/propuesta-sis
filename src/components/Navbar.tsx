@@ -16,7 +16,7 @@ const mainLinks = [
   { label: 'Red Médica', to: '#' },
   { label: 'Trámites y Consultas', to: '#' },
   { label: 'Buscador de Asociados', to: '/consulta' },
-  { label: 'Localidades', to: '/locales' },
+  { label: 'ULEs', to: '/locales' },
   { label: 'Pueblos Indígenas', to: '/pueblos-indigenas' },
   { label: 'Preguntas Frecuentes', to: '#' },
 ];

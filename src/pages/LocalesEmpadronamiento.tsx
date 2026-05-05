@@ -266,7 +266,7 @@ export default function LocalesEmpadronamiento() {
   return (
     <>
       <HeroBanner
-        title="Buscador de locales de empadronamiento"
+        title="Buscador de locales de empadronamiento (ULEs)"
         subtitle="Ubica un local cerca a tu ubicación a nivel nacional"
       />
 
