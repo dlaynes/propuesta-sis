@@ -1,0 +1,33 @@
+export interface Localidad {
+    num: string;
+    localidad: string;
+    tipo_localidad: string;
+    pueblo_indigena: string;
+    ubigeo_codigo: string;
+    ubigeo_departamento: string;
+    ubigeo_provincia: string;
+    ubigeo_distrito: string;
+    total_poblacion: string;
+    hablantes_mayores_3_anios: string;
+    hablantes_alguna_lengua_indigena: string;
+    hombres: string;
+    porc_hombres: string;
+    mujeres: string;
+    cero_a_4_anios: string;
+    cinco_a_14_anios: string;
+    de_15_a_29_anios: string;
+    de_30_a_64_anios: string;
+    mas_de_65_anios: string;
+    num_de_instituciones_educativas_en_la_localidad: string;
+    tipo_de_educacion_impartida_en_la_localidad: string;
+    tipo_de_instituciones_educativas_en_la_localidad: string;
+    nivel_de_las_instituciones_educativas_en_la_localidad: string;
+    comunidad_georeferenciada: string;
+    cuenta_con_centro_poblado_censal_identificado: string;
+    resolucion_de_reconocimiento_de_la_comunidad: string;
+    fecha_de_reconocimiento_de_la_comunidad: string;
+    resolucion_de_titulacion_de_la_comunidad: string;
+    fecha_de_titulacion_de_la_comunidad: string;
+    fuentes: string;
+    observaciones: string;
+}

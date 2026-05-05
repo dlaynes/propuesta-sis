@@ -1,18 +1,20 @@
+import { ExternalLink } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface SidebarLink {
   label: string;
   to?: string;
   href?: string;
+  target?: string;
 }
 
 const links: SidebarLink[] = [
   { label: 'Consultas de asegurado', to: '/' },
-  { label: 'Pueblos indígenas', to: '/localidades' },
+  { label: 'Pueblos indígenas', to: '/pueblos-indigenas' },
   { label: 'Unidades locales de empadronamiento', to: '/locales' },
-  { label: 'Consultas SIS FOH', to: '/consultas-sis-foh' },
-  { label: 'Consultas SUSALUD', to: '/consultas-susalud' },
-  { label: 'Establecimientos de salud', to: '/establecimientos' },
+  { label: 'Consultas SIS FOH', href: 'https://focalizacion.sisfoh.gob.pe/ConsultaCSE/', target: '_blank' },
+  { label: 'Consultas SUSALUD', href: 'https://app1.susalud.gob.pe/registro/', target: '_blank' },
+  { label: 'Establecimientos de salud', href: 'https://sigeps.sis.gob.pe/BuscadorEESS/PortalSIS/', target: '_blank' },
 ];
 
 function isActive(item: SidebarLink, pathname: string) {
@@ -46,8 +48,9 @@ export function Sidebar() {
 
           return (
             <li key={l.label}>
-              <a href={l.href || '#'} className={`${baseClass} ${activeClass}`}>
+              <a href={l.href || '#'} className={`${baseClass} ${activeClass}`} target={l.target || undefined} rel={l.target === '_blank' ? 'noopener noreferrer' : undefined}>
                 {l.label}
+                {l.target === '_blank' && <ExternalLink name="external-link" className="inline-block ml-1" aria-hidden="true" />}
               </a>
             </li>
           );

@@ -113,7 +113,7 @@ const rows = [
   },
 ];
 
-export default function LocalidadesConsulta() {
+export default function PueblosIndigenasConsulta() {
   const navigate = useNavigate();
   const [nombre, setNombre] = useState('');
 
@@ -146,7 +146,7 @@ export default function LocalidadesConsulta() {
 
         <div className="text-center mb-6 flex justify-center gap-2">
           <button
-            onClick={() => navigate('/localidades/estadisticas')}
+            onClick={() => navigate('/pueblos-indigenas/estadisticas')}
             className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-4 rounded transition-colors"
           >
             Ver más datos estadísticos
@@ -285,7 +285,7 @@ export default function LocalidadesConsulta() {
                     </td>
                     <td className="px-3 py-3">
                       <button
-                        onClick={() => navigate('/localidades/detalle')}
+                        onClick={() => navigate('/pueblos-indigenas/localidad')}
                         className="text-sis-navy hover:text-sis-link text-xs font-medium underline"
                       >
                         Ver

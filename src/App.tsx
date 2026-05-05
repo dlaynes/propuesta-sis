@@ -3,13 +3,10 @@ import { Layout } from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import ConsultaAsociado from './pages/ConsultaAsociado';
 import LocalesEmpadronamiento from './pages/LocalesEmpadronamiento';
-import LocalidadesConsulta from './pages/LocalidadesConsulta';
-import LocalidadesEstadisticas from './pages/LocalidadesEstadisticas';
-import LocalidadesDetalle from './pages/LocalidadesDetalle';
-import LocalidadesMapa from './pages/LocalidadesMapa';
-import ConsultaSisFoh from './pages/ConsultaSisFoh';
-import ConsultaSusalud from './pages/ConsultaSusalud';
-import EstablecimientosSalud from './pages/EstablecimientosSalud';
+import PueblosIndigenasConsulta from './pages/PueblosIndigenasConsulta';
+import PueblosIndigenasEstadisticas from './pages/PueblosIndigenasEstadisticas';
+import PueblosIndigenasLocalidad from './pages/PueblosIndigenasLocalidad';
+import PueblosIndigenasMapa from './pages/PueblosIndigenasMapa';
 
 function App() {
   return (
@@ -19,13 +16,10 @@ function App() {
         <Route index element={<ConsultaAsociado />} />
         <Route path="consulta" element={<Navigate to="/" replace />} />
         <Route path="locales" element={<LocalesEmpadronamiento />} />
-        <Route path="localidades" element={<LocalidadesConsulta />} />
-        <Route path="localidades/estadisticas" element={<LocalidadesEstadisticas />} />
-        <Route path="localidades/detalle" element={<LocalidadesDetalle />} />
-        <Route path="localidades/mapa" element={<LocalidadesMapa />} />
-        <Route path="consultas-sis-foh" element={<ConsultaSisFoh />} />
-        <Route path="consultas-susalud" element={<ConsultaSusalud />} />
-        <Route path="establecimientos" element={<EstablecimientosSalud />} />
+        <Route path="pueblos-indigenas" element={<PueblosIndigenasConsulta />} />
+        <Route path="pueblos-indigenas/estadisticas" element={<PueblosIndigenasEstadisticas />} />
+        <Route path="pueblos-indigenas/localidad" element={<PueblosIndigenasLocalidad />} />
+        <Route path="pueblos-indigenas/mapa" element={<PueblosIndigenasMapa />} />
       </Route>
     </Routes>
     </ErrorBoundary>

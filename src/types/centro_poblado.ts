@@ -1,0 +1,33 @@
+export interface CentroPoblado {
+    num: string;
+    centro_poblado: string;
+    localidad: string;
+    tipo_localidad: string;
+    pueblo_indigena: string;
+    ubigeo_centro_poblado_actual: string;
+    ubigeo_distrito_actual: string;
+    ubigeo_centro_poblado_2016: string;
+    ubigeo_distrito_2016: string;
+    total_poblacion: string;
+    hablantes_alguna_lengua_indigena: string;
+    porc_hablantes_alguna_lengua_indigena: string;
+    hablantes_mayores_3_anios: string;
+    hombres: string;
+    mujeres: string;
+    cero_a_4_anios: string;
+    cinco_a_14_anios: string;
+    de_15_a_29_anios: string;
+    de_30_a_64_anios: string;
+    mas_de_65_anios: string;
+    num_de_instituciones_educativas_en_el_centro_poblado: string;
+    tipo_de_educacion_impartida_en_el_centro_poblado: string;
+    tipo_de_instituciones_educativas_en_el_centro_poblado: string;
+    nivel_de_las_instituciones_educativas_en_el_centro_poblado: string;
+    comunidad_georeferenciada: string;
+    resolucion_de_reconocimiento_de_la_comunidad: string;
+    fecha_de_reconocimiento_de_la_comunidad: string;
+    resolucion_de_titulacion_de_la_comunidad: string;
+    fecha_de_titulacion_de_la_comunidad: string;
+    fuentes: string;
+    observaciones: string;
+}

@@ -141,7 +141,7 @@ function createCustomIcon(color: string) {
   });
 }
 
-export default function LocalidadesMapa() {
+export default function PueblosIndigenasMapa() {
   const navigate = useNavigate();
   const departments = useMemo(() => getAllDepartments(), []);
 

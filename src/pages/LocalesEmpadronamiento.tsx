@@ -11,22 +11,7 @@ import {
 import { getAllUleRecords } from '../services/uleService';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-
-interface Local {
-  codigo: string;
-  nombre: string;
-  dias: string;
-  correo: string;
-  referencia: string;
-  telefono: string;
-  direccion: string;
-  ubigeo?: string;
-  departamento?: string;
-  provincia?: string;
-  distrito?: string;
-  lat?: number;
-  lng?: number;
-}
+import type { LocalEmpadronamiento } from '../types/local_empadronamiento';
 
 function createUleIcon() {
   return L.divIcon({
@@ -38,7 +23,7 @@ function createUleIcon() {
   });
 }
 
-function MapUpdater({ results }: { results: Local[] }) {
+function MapUpdater({ results }: { results: LocalEmpadronamiento[] }) {
   const map = useMap();
   const valid = results.filter((r) => r.lat !== undefined && r.lng !== undefined && r.lat !== 0 && r.lng !== 0);
   if (valid.length > 0) {
@@ -49,7 +34,7 @@ function MapUpdater({ results }: { results: Local[] }) {
 }
 
 interface MapFocusProps {
-  target: Local | null;
+  target: LocalEmpadronamiento | null;
   markerRefs: React.RefObject<Map<string, L.Marker> | null>;
   onDone: () => void;
 }
@@ -70,7 +55,7 @@ function MapFocus({ target, markerRefs, onDone }: MapFocusProps) {
   return null;
 }
 
-const allLocalidades: Local[] = getAllUleRecords().map((r) => {
+const allLocalidades: LocalEmpadronamiento[] = getAllUleRecords().map((r) => {
   const district = findDistrictById(r.ubigeo);
   return {
     codigo: `ULE-${r.ubigeo}`,
@@ -98,9 +83,9 @@ export default function LocalesEmpadronamiento() {
   const [provinceId, setProvinceId] = useState('');
   const [districtId, setDistrictId] = useState('');
   const [busqueda, setBusqueda] = useState('');
-  const [resultados, setResultados] = useState<Local[]>([]);
+  const [resultados, setResultados] = useState<LocalEmpadronamiento[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
-  const [focusLoc, setFocusLoc] = useState<Local | null>(null);
+  const [focusLoc, setFocusLoc] = useState<LocalEmpadronamiento | null>(null);
 
   const provinces = useMemo<Province[]>(() => {
     if (!departmentId) return [];
@@ -174,7 +159,7 @@ export default function LocalesEmpadronamiento() {
     setFocusLoc(null);
   }
 
-  function handleVerEnMapa(loc: Local) {
+  function handleVerEnMapa(loc: LocalEmpadronamiento) {
     setFocusLoc(loc);
     mapContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -274,12 +259,9 @@ export default function LocalesEmpadronamiento() {
               <RotateCcw className="w-4 h-4" />
               Limpiar
             </button>
-            <button
-              className="border border-sis-border hover:bg-sis-bg text-sis-text text-sm font-semibold py-2 px-4 rounded transition-colors inline-flex items-center gap-2"
-              title="Descargar resultados"
-            >
+            <button className="bg-sis-navy hover:bg-sis-navy-light text-white text-sm py-2 px-4 rounded transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" />
-              Exportar
+              Descargar Reporte Completo
             </button>
             <div className="ml-auto text-xs text-sis-text-light">
               {locationText}

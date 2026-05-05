@@ -81,7 +81,7 @@ export default function LocalidadesDetalle() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Back link */}
         <button
-          onClick={() => navigate('/localidades')}
+          onClick={() => navigate('/pueblos-indigenas')}
           className="text-sis-navy hover:text-sis-link font-medium text-sm flex items-center gap-1 mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -263,11 +263,11 @@ export default function LocalidadesDetalle() {
         </div>
 
         <button
-          onClick={() => navigate('/localidades')}
+          onClick={() => navigate('/pueblos-indigenas')}
           className="text-sis-navy hover:text-sis-link font-medium text-sm mt-8 flex items-center gap-1 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver a Localidades
+          Volver al buscador
         </button>
       </div>
     </>

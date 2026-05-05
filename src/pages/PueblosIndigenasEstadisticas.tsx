@@ -73,7 +73,7 @@ const pueblosRows = [
   { pueblo: 'Otros', familias: 'Diversas', hablantes: '156,892', localidades: '297', porcentaje: 10.4, color: 'bg-gray-500' },
 ];
 
-export default function LocalidadesEstadisticas() {
+export default function PueblosIndigenasEstadisticas() {
   const navigate = useNavigate();
   const departments = useMemo(() => getAllDepartments(), []);
 
@@ -116,11 +116,11 @@ export default function LocalidadesEstadisticas() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Back link */}
         <button
-          onClick={() => navigate('/localidades')}
+          onClick={() => navigate('/pueblos-indigenas')}
           className="text-sis-navy hover:text-sis-link font-medium text-sm mb-8 flex items-center gap-1 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver a Localidades
+          Volver al buscador
         </button>
 
 
@@ -383,15 +383,11 @@ export default function LocalidadesEstadisticas() {
         {/* Footer actions */}
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate('/localidades')}
+            onClick={() => navigate('/pueblos-indigenas')}
             className="text-sis-navy hover:text-sis-link font-medium text-sm flex items-center gap-1 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver a Localidades
-          </button>
-          <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-2 px-4 rounded text-sm transition-colors flex items-center gap-1.5">
-            <Download className="w-3.5 h-3.5" />
-            Descargar Reporte Completo
+            Volver al buscador
           </button>
         </div>
       </div>
