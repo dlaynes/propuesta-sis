@@ -11,12 +11,13 @@ const topLinks = [
 ];
 
 const mainLinks = [
-  { label: 'Inicio', to: '/' },
+  { label: 'Inicio', to: '#' },
   { label: 'Planes de Salud', to: '#' },
   { label: 'Red Médica', to: '#' },
   { label: 'Trámites y Consultas', to: '#' },
   { label: 'Buscador de Asociados', to: '/consulta' },
   { label: 'Localidades', to: '/localidades' },
+  { label: 'Pueblos Indígenas', to: '/pueblos-indigenas' },
   { label: 'Preguntas Frecuentes', to: '#' },
 ];
 
