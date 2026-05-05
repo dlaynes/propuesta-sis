@@ -73,7 +73,7 @@ export default function PueblosIndigenasCentroPoblado() {
   const hombres = parseInt(row.hombres, 10) || 0;
   const mujeres = parseInt(row.mujeres, 10) || 0;
   const hablantes = parseInt(row.hablantes_alguna_lengua_indigena, 10) || 0;
-  const pctHablantes = parseFloat(row.porc_hablantes_alguna_lengua_indigena) || 0;
+  const pctHablantes = totalPop > 0 ? Math.round((hablantes / totalPop) * 100) : 0;
 
   // Gender percentages may be "-" in CP data; compute fallback
   const pctHombres = totalPop > 0 ? Math.round((hombres / totalPop) * 100) : 0;

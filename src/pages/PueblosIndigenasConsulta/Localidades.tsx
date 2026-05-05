@@ -73,7 +73,8 @@ export const Localidades = () => {
   }
 
   function getLenguaPercent(row: Localidad): number {
-    return Math.round(parseFloat(row.porc_hablantes_alguna_lengua_indigena) || 0);
+    const lenguaPct = row.total_poblacion ? parseFloat(row.hablantes_alguna_lengua_indigena) / parseFloat(row.total_poblacion) || 0 : 0;
+    return Math.round(lenguaPct * 100);
   }
 
   function getLenguaColor(pct: number): string {

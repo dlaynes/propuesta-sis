@@ -156,7 +156,7 @@ export const CentrosPoblados = () => {
             </thead>
             <tbody>
               {paginatedRows.map((row: CentroPoblado) => {
-                const lenguaPct = parseFloat(row.porc_hablantes_alguna_lengua_indigena) || 0;
+                const lenguaPct = row.total_poblacion ? parseFloat(row.hablantes_alguna_lengua_indigena) / parseFloat(row.total_poblacion) || 0 : 0;
                 return (
                   <tr key={row.num} className="border-b border-sis-border hover:bg-gray-50 transition-colors">
                     <td className="px-3 py-3 font-medium text-sis-navy">{row.centro_poblado}</td>
