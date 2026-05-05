@@ -1,75 +1,122 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { HeroBanner } from '../components/HeroBanner';
 import {
   ArrowLeft, Users, Building2, School, FileText, ClipboardList,
   Info, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
+import localidadesData from '../data/json/localidades.json';
+import { getDistrictHierarchy } from '../services/ubigeoService';
+import type { Localidad } from '../types/localidad';
 
-const edades = [
-  { rango: '0-14 años', cantidad: '271', porcentaje: 32, color: 'bg-green-500' },
-  { rango: '15-29 años', cantidad: '220', porcentaje: 26, color: 'bg-blue-500' },
-  { rango: '30-44 años', cantidad: '186', porcentaje: 22, color: 'bg-orange-500' },
-  { rango: '45-59 años', cantidad: '110', porcentaje: 13, color: 'bg-purple-500' },
-  { rango: '60+ años', cantidad: '9', porcentaje: 7, color: 'bg-red-500' },
-];
+const records: Localidad[] = localidadesData as Localidad[];
 
-const instituciones = [
-  {
-    nombre: 'I.E. N° 60127 San Juan',
-    tipo: 'Escolarizado',
-    modalidad: 'Educación Básica Regular',
-    tags: [
-      { label: 'Inicial', color: 'bg-green-100 text-green-700 border-green-300' },
-      { label: 'Primaria', color: 'bg-blue-100 text-blue-700 border-blue-300' },
-    ],
-    borderColor: 'border-l-green-500',
-  },
-  {
-    nombre: 'I.E.S. Comunal Kukama',
-    tipo: 'Escolarizado',
-    modalidad: 'Educación Básica Regular',
-    tags: [
-      { label: 'Secundaria', color: 'bg-orange-100 text-orange-700 border-orange-300' },
-    ],
-    borderColor: 'border-l-orange-500',
-  },
-  {
-    nombre: 'CETPRO Artesanías Amazónicas',
-    tipo: 'No Escolarizado',
-    modalidad: 'Educación Técnico-Productiva',
-    tags: [
-      { label: 'Superior Técnico', color: 'bg-purple-100 text-purple-700 border-purple-300' },
-    ],
-    borderColor: 'border-l-purple-500',
-  },
-];
+function findLocalidadByNum(num: string): Localidad | undefined {
+  return records.find((r) => r.num === num);
+}
 
-const observaciones = [
-  {
-    icon: AlertTriangle,
-    iconBg: 'bg-yellow-100 text-yellow-700',
-    borderColor: 'border-l-yellow-400',
-    title: 'Acceso limitado en temporada de lluvias',
-    text: 'El acceso a la comunidad puede verse dificultado durante los meses de diciembre a marzo debido al incremento del caudal del río Marañón.',
-  },
-  {
-    icon: CheckCircle2,
-    iconBg: 'bg-green-100 text-green-700',
-    borderColor: 'border-l-green-400',
-    title: 'Proyecto de electrificación en curso',
-    text: 'Actualmente se encuentra en ejecución un proyecto de electrificación rural con paneles solares para 150 viviendas. Finalización prevista: diciembre 2024.',
-  },
-  {
-    icon: Info,
-    iconBg: 'bg-blue-100 text-blue-700',
-    borderColor: 'border-l-blue-400',
-    title: 'Lengua originaria preservada',
-    text: 'El 87% de la población habla la lengua Kukama-Kukamiria. Se ejecuta un programa de revitalización lingüística en las instituciones educativas.',
-  },
-];
+function parseInstituciones(row: Localidad) {
+  const num = parseInt(row.num_de_instituciones_educativas_en_la_localidad, 10) || 0;
+  const tipos = row.tipo_de_instituciones_educativas_en_la_localidad?.split('\n').filter(Boolean) || [];
+  const niveles = row.nivel_de_las_instituciones_educativas_en_la_localidad?.split('\n').filter(Boolean) || [];
+  const educacion = row.tipo_de_educacion_impartida_en_la_localidad?.split('\n').filter(Boolean) || [];
+  return { num, tipos, niveles, educacion };
+}
 
-export default function LocalidadesDetalle() {
+export default function PueblosIndigenasLocalidad() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const row = id ? findLocalidadByNum(id) : undefined;
+
+  if (!row) {
+    return (
+      <>
+        <HeroBanner title="Localidad no encontrada" subtitle="El identificador no existe en la base de datos" />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <button
+            onClick={() => navigate('/pueblos-indigenas')}
+            className="text-sis-navy hover:text-sis-link font-medium text-sm flex items-center gap-1 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al buscador
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  const hierarchy = getDistrictHierarchy(row.ubigeo_codigo);
+  const distrito = hierarchy.district?.name || '';
+  const provincia = hierarchy.province?.name || '';
+  const departamento = hierarchy.department?.name || '';
+
+  const hasTitulacion =
+    row.resolucion_de_titulacion_de_la_comunidad &&
+    row.resolucion_de_titulacion_de_la_comunidad.trim() !== '' &&
+    row.resolucion_de_titulacion_de_la_comunidad !== '-';
+
+  const hasReconocimiento =
+    row.resolucion_de_reconocimiento_de_la_comunidad &&
+    row.resolucion_de_reconocimiento_de_la_comunidad.trim() !== '' &&
+    row.resolucion_de_reconocimiento_de_la_comunidad !== '-';
+
+  const tags = [
+    { label: `Pueblo ${row.pueblo_indigena}`, color: 'border-green-500 text-green-700 bg-green-50' },
+    ...(row.comunidad_georeferenciada?.toLowerCase() === 'si'
+      ? [{ label: 'Georreferenciada', color: 'border-blue-500 text-blue-700 bg-blue-50' }]
+      : []),
+    ...(row.cuenta_con_centro_poblado_censal_identificado?.toLowerCase() === 'si'
+      ? [{ label: 'Con C.P. Censal', color: 'border-orange-500 text-orange-700 bg-orange-50' }]
+      : []),
+    ...(hasTitulacion ? [{ label: 'Titulada', color: 'border-purple-500 text-purple-700 bg-purple-50' }] : []),
+  ];
+
+  const totalPop = parseInt(row.total_poblacion, 10) || 0;
+  const hombres = parseInt(row.hombres, 10) || 0;
+  const mujeres = parseInt(row.mujeres, 10) || 0;
+  const hablantes = parseInt(row.hablantes_alguna_lengua_indigena, 10) || 0;
+  const pctHablantes = totalPop > 0 ? Math.round((hablantes / totalPop) * 100) : 0;
+
+  const pctHombres = totalPop > 0 ? Math.round((hombres / totalPop) * 100) : 0;
+  const pctMujeres = totalPop > 0 ? Math.round((mujeres / totalPop) * 100) : 0;
+
+  const edades = [
+    { rango: '0 - 4 años', porcentaje: totalPop > 0 ? Math.round((parseInt(row.cero_a_4_anios, 10) || 0) / totalPop * 100) : 0, color: 'bg-green-500' },
+    { rango: '5 - 14 años', porcentaje: totalPop > 0 ? Math.round((parseInt(row.cinco_a_14_anios, 10) || 0) / totalPop * 100) : 0, color: 'bg-blue-500' },
+    { rango: '15 - 29 años', porcentaje: totalPop > 0 ? Math.round((parseInt(row.de_15_a_29_anios, 10) || 0) / totalPop * 100) : 0, color: 'bg-orange-500' },
+    { rango: '30 - 64 años', porcentaje: totalPop > 0 ? Math.round((parseInt(row.de_30_a_64_anios, 10) || 0) / totalPop * 100) : 0, color: 'bg-purple-500' },
+    { rango: '65+ años', porcentaje: totalPop > 0 ? Math.round((parseInt(row.mas_de_65_anios, 10) || 0) / totalPop * 100) : 0, color: 'bg-red-500' },
+  ];
+
+  const instituciones = parseInstituciones(row);
+
+  const observacionesList = [];
+  if (row.observaciones && row.observaciones.trim() && row.observaciones !== '-') {
+    observacionesList.push({
+      icon: Info,
+      iconBg: 'bg-blue-100 text-blue-700',
+      borderColor: 'border-l-blue-400',
+      title: 'Observación',
+      text: row.observaciones,
+    });
+  }
+  if (hasTitulacion) {
+    observacionesList.push({
+      icon: CheckCircle2,
+      iconBg: 'bg-green-100 text-green-700',
+      borderColor: 'border-l-green-400',
+      title: 'Comunidad titulada',
+      text: `Resolución: ${row.resolucion_de_titulacion_de_la_comunidad}`,
+    });
+  }
+  if (hasReconocimiento) {
+    observacionesList.push({
+      icon: AlertTriangle,
+      iconBg: 'bg-yellow-100 text-yellow-700',
+      borderColor: 'border-l-yellow-400',
+      title: 'Comunidad reconocida',
+      text: `Resolución: ${row.resolucion_de_reconocimiento_de_la_comunidad}`,
+    });
+  }
 
   return (
     <>
@@ -90,17 +137,16 @@ export default function LocalidadesDetalle() {
 
         {/* Title card */}
         <div className="bg-white rounded-lg border border-sis-border p-6 mb-6">
-          <h1 className="text-2xl font-bold text-sis-navy mb-2">Comunidad Nativa San Juan de Miraflores</h1>
+          <h1 className="text-2xl font-bold text-sis-navy mb-2">Localidad: {row.localidad && row.localidad !== '-' ? row.localidad : 'Nombre no disponible'}</h1>
           <p className="text-sm text-sis-text-light mb-4">
-            Comunidad Nativa • Distrito de Nauta • Provincia de Loreto • Departamento de Loreto • Código ZIP: 16501
+            {row.tipo_localidad}
+            {distrito && ` • Distrito de ${distrito}`}
+            {provincia && ` • Provincia de ${provincia}`}
+            {departamento && ` • Departamento de ${departamento}`}
+            {row.ubigeo_codigo && ` • Ubigeo: ${row.ubigeo_codigo}`}
           </p>
           <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'Pueblo Kukama-Kukamiria', color: 'border-green-500 text-green-700 bg-green-50' },
-              { label: 'Georreferenciada', color: 'border-blue-500 text-blue-700 bg-blue-50' },
-              { label: 'Con C.P. Censal', color: 'border-orange-500 text-orange-700 bg-orange-50' },
-              { label: 'Titulada', color: 'border-purple-500 text-purple-700 bg-purple-50' },
-            ].map((tag) => (
+            {tags.map((tag) => (
               <span
                 key={tag.label}
                 className={`inline-block text-xs font-medium px-3 py-1 rounded-full border ${tag.color}`}
@@ -111,7 +157,7 @@ export default function LocalidadesDetalle() {
           </div>
         </div>
 
-        {/* Stats / Charts / Schools — 3 columns */}
+        {/* Stats / Charts / Schools */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Datos Estadísticos */}
           <div className="bg-white rounded-lg border border-sis-border p-6">
@@ -122,55 +168,46 @@ export default function LocalidadesDetalle() {
             <div className="space-y-4">
               <div>
                 <p className="text-xs text-sis-text-light">Población Total</p>
-                <p className="text-xl font-bold text-sis-navy">847</p>
+                <p className="text-xl font-bold text-sis-navy">{totalPop.toLocaleString()}</p>
               </div>
-              <div>
-                <p className="text-xs text-sis-text-light">Edad Promedio</p>
-                <p className="text-xl font-bold text-teal-600">28.4</p>
-              </div>
-              <div>
-                <p className="text-xs text-sis-text-light">Población Indígena</p>
-                <p className="text-xl font-bold text-purple-600">94.2%</p>
-              </div>
-            </div>
-
-            <hr className="my-4 border-sis-border" />
-
-            <h4 className="font-semibold text-sis-navy text-sm mb-3">Distribución por Género</h4>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-sis-text-light">Hombres</span>
-                  <span className="font-semibold text-sis-navy">438 (51.7%)</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-sis-text-light">Hombres</p>
+                  <p className="font-bold text-sis-navy">{hombres.toLocaleString()}</p>
+                  <p className="text-xs text-sis-text-light">{pctHombres}%</p>
                 </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: '51.7%' }} />
+                <div>
+                  <p className="text-xs text-sis-text-light">Mujeres</p>
+                  <p className="font-bold text-sis-navy">{mujeres.toLocaleString()}</p>
+                  <p className="text-xs text-sis-text-light">{pctMujeres}%</p>
                 </div>
               </div>
               <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-sis-text-light">Mujeres</span>
-                  <span className="font-semibold text-sis-navy">409 (48.3%)</span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-pink-500 rounded-full" style={{ width: '48.3%' }} />
+                <p className="text-xs text-sis-text-light">Hablantes de lengua originaria</p>
+                <p className="text-xl font-bold text-sis-navy">{hablantes.toLocaleString()}</p>
+                <p className="text-xs text-sis-text-light">{pctHablantes}% de la población</p>
+                <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+                  <div
+                    className="h-full rounded-full bg-green-500"
+                    style={{ width: `${pctHablantes}%` }}
+                  />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Estructura Poblacional por Edad */}
+          {/* Distribución por Edades */}
           <div className="bg-white rounded-lg border border-sis-border p-6">
             <div className="flex items-center gap-2 mb-4">
               <Building2 className="w-5 h-5 text-sis-text-light" />
-              <h3 className="font-bold text-sis-navy">Estructura Poblacional por Edad</h3>
+              <h3 className="font-bold text-sis-navy">Distribución por Edades</h3>
             </div>
             <div className="space-y-3">
               {edades.map((e) => (
                 <div key={e.rango}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-sis-text">{e.rango}</span>
-                    <span className="font-medium text-sis-navy">{e.cantidad} ({e.porcentaje}%)</span>
+                    <span className="font-medium text-sis-navy">{e.porcentaje}%</span>
                   </div>
                   <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${e.color}`} style={{ width: `${e.porcentaje}%` }} />
@@ -187,27 +224,52 @@ export default function LocalidadesDetalle() {
               <h3 className="font-bold text-sis-navy">Instituciones Educativas EIB</h3>
             </div>
             <div className="space-y-4">
-              {instituciones.map((inst) => (
-                <div
-                  key={inst.nombre}
-                  className={`border border-sis-border rounded-lg p-3 border-l-4 ${inst.borderColor}`}
-                >
-                  <p className="font-semibold text-sis-navy text-sm">{inst.nombre}</p>
-                  <p className="text-xs text-sis-text-light mt-0.5">
-                    Tipo: {inst.tipo} • Modalidad: {inst.modalidad}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {inst.tags.map((tag) => (
-                      <span
-                        key={tag.label}
-                        className={`text-[10px] font-medium px-2 py-0.5 rounded border ${tag.color}`}
-                      >
-                        {tag.label}
-                      </span>
-                    ))}
+              {instituciones.num > 0 ? (
+                <>
+                  <div>
+                    <p className="text-xs text-sis-text-light mb-1">Total instituciones</p>
+                    <p className="text-xl font-bold text-sis-navy">{instituciones.num}</p>
                   </div>
-                </div>
-              ))}
+                  {instituciones.educacion.length > 0 && (
+                    <div>
+                      <p className="text-xs text-sis-text-light mb-1">Tipo de educación</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {instituciones.educacion.map((e) => (
+                          <span key={e} className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-sis-navy/10 text-sis-navy border border-sis-navy/20">
+                            {e}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {instituciones.tipos.length > 0 && (
+                    <div>
+                      <p className="text-xs text-sis-text-light mb-1">Tipo de institución</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {instituciones.tipos.map((t) => (
+                          <span key={t} className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {instituciones.niveles.length > 0 && (
+                    <div>
+                      <p className="text-xs text-sis-text-light mb-1">Niveles</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {instituciones.niveles.map((n) => (
+                          <span key={n} className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-sis-text-light">Sin información de instituciones educativas.</p>
+              )}
             </div>
           </div>
         </div>
@@ -221,19 +283,34 @@ export default function LocalidadesDetalle() {
               <h3 className="font-bold text-sis-navy">Datos Legales</h3>
             </div>
             <div className="space-y-4">
-              <div className="border border-sis-border rounded-lg p-4">
-                <p className="text-xs text-sis-text-light mb-1">Resolución de Reconocimiento</p>
-                <p className="font-semibold text-sis-navy text-sm">R.D. N° 0234-78-DR-XXII-L</p>
-                <p className="text-xs text-sis-text-light mt-1">Fecha de Reconocimiento: 15 de marzo de 1978</p>
-              </div>
-              <div className="border border-sis-border rounded-lg p-4">
-                <p className="text-xs text-sis-text-light mb-1">Resolución de Titulación</p>
-                <p className="font-semibold text-sis-navy text-sm">R.M. N° 0456-82-AG-DGRA</p>
-                <p className="text-xs text-sis-text-light mt-1">Fecha de Titulación: 22 de agosto de 1982</p>
-              </div>
+              {hasReconocimiento && (
+                <div className="border border-sis-border rounded-lg p-4">
+                  <p className="text-xs text-sis-text-light mb-1">Resolución de Reconocimiento</p>
+                  <p className="font-semibold text-sis-navy text-sm">{row.resolucion_de_reconocimiento_de_la_comunidad}</p>
+                  {row.fecha_de_reconocimiento_de_la_comunidad && (
+                    <p className="text-xs text-sis-text-light mt-1">
+                      Fecha: {row.fecha_de_reconocimiento_de_la_comunidad}
+                    </p>
+                  )}
+                </div>
+              )}
+              {hasTitulacion && (
+                <div className="border border-sis-border rounded-lg p-4">
+                  <p className="text-xs text-sis-text-light mb-1">Resolución de Titulación</p>
+                  <p className="font-semibold text-sis-navy text-sm">{row.resolucion_de_titulacion_de_la_comunidad}</p>
+                  {row.fecha_de_titulacion_de_la_comunidad && (
+                    <p className="text-xs text-sis-text-light mt-1">
+                      Fecha: {row.fecha_de_titulacion_de_la_comunidad}
+                    </p>
+                  )}
+                </div>
+              )}
+              {!hasReconocimiento && !hasTitulacion && (
+                <p className="text-sm text-sis-text-light">Sin datos legales registrados.</p>
+              )}
             </div>
             <p className="text-[10px] text-sis-text-light mt-4">
-              Fuente de Datos: Censo Nacional 2017 - XII de Población y VII de Vivienda / Base de Datos de Comunidades Nativas MINAGRI
+              Fuente: {row.fuentes || 'Censo Nacional de Población'}
             </p>
           </div>
 
@@ -244,20 +321,24 @@ export default function LocalidadesDetalle() {
               <h3 className="font-bold text-sis-navy">Observaciones</h3>
             </div>
             <div className="space-y-4">
-              {observaciones.map((obs) => (
-                <div
-                  key={obs.title}
-                  className={`flex items-start gap-3 border border-sis-border rounded-lg p-4 border-l-4 ${obs.borderColor}`}
-                >
-                  <div className={`p-1.5 rounded-full shrink-0 ${obs.iconBg}`}>
-                    <obs.icon className="w-4 h-4" />
+              {observacionesList.length > 0 ? (
+                observacionesList.map((obs) => (
+                  <div
+                    key={obs.title}
+                    className={`flex items-start gap-3 border border-sis-border rounded-lg p-4 border-l-4 ${obs.borderColor}`}
+                  >
+                    <div className={`p-1.5 rounded-full shrink-0 ${obs.iconBg}`}>
+                      <obs.icon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sis-navy text-sm">{obs.title}</p>
+                      <p className="text-xs text-sis-text-light mt-1">{obs.text}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-sis-navy text-sm">{obs.title}</p>
-                    <p className="text-xs text-sis-text-light mt-1">{obs.text}</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-sis-text-light">Sin observaciones registradas.</p>
+              )}
             </div>
           </div>
         </div>

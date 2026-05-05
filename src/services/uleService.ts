@@ -1,4 +1,5 @@
 import uleData from '../data/json/directorio_nacional_ule_2024.json';
+import type { LocalEmpadronamiento } from '../types/local_empadronamiento';
 
 export interface UleRecord {
   ubigeo: string;
@@ -8,6 +9,8 @@ export interface UleRecord {
   direccion_ule: string;
   referencia: string;
   dias_atencion: string;
+  lat?: number;
+  lng?: number;
 }
 
 const records: UleRecord[] = uleData as UleRecord[];
@@ -90,15 +93,7 @@ export function getUleDistrictsByProvince(province: string): string[] {
 }
 
 /** Convert a ULE record to the Local format used by LocalesEmpadronamiento */
-export function uleToLocal(record: UleRecord, options?: { codigo?: string; correo?: string; telefono?: string }): {
-  codigo: string;
-  nombre: string;
-  dias: string;
-  correo: string;
-  referencia: string;
-  telefono: string;
-  direccion: string;
-} {
+export function uleToLocal(record: UleRecord, options?: { codigo?: string; correo?: string; telefono?: string }) : LocalEmpadronamiento {
   return {
     codigo: options?.codigo ?? `ULE-${record.ubigeo}`,
     nombre: `${record.distrito} — ${record.provincia}, ${record.departamento}`,
@@ -107,5 +102,7 @@ export function uleToLocal(record: UleRecord, options?: { codigo?: string; corre
     referencia: record.referencia,
     telefono: options?.telefono ?? 'No disponible',
     direccion: record.direccion_ule,
+    lat: record.lat,
+    lng: record.lng
   };
 }

@@ -69,8 +69,8 @@ const allLocalidades: LocalEmpadronamiento[] = getAllUleRecords().map((r) => {
     departamento: r.departamento,
     provincia: r.provincia,
     distrito: r.distrito,
-    lat: district?.lat,
-    lng: district?.lng,
+    lat: r.lat || district?.lat,
+    lng: r.lng || district?.lng,
   };
 });
 
