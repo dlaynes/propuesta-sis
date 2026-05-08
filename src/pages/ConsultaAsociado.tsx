@@ -218,6 +218,11 @@ export default function ConsultaAsociado() {
           {/* Right column */}
           <div>
             <Sidebar />
+
+            <div className="mt-8">
+              <img src="/banner.jpeg" alt="Banner" className="w-full h-auto" />
+            </div>
+
           </div>
         </div>
       </div>
