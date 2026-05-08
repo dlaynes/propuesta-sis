@@ -340,19 +340,19 @@ export default function LocalesEmpadronamiento() {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={handleBuscar}
-              className="bg-sis-orange hover:bg-sis-orange-hover text-white text-sm font-semibold py-2 px-5 rounded transition-colors inline-flex items-center gap-2"
+              className="bg-sis-orange cursor-pointer hover:bg-sis-orange-hover text-white text-sm font-semibold py-2 px-5 rounded transition-colors inline-flex items-center gap-2"
             >
               <Search className="w-4 h-4" />
               Buscar
             </button>
             <button
               onClick={handleLimpiar}
-              className="border border-sis-border hover:bg-sis-bg text-sis-text text-sm font-semibold py-2 px-4 rounded transition-colors inline-flex items-center gap-2"
+              className="border border-sis-border cursor-pointer hover:bg-sis-bg text-sis-text text-sm font-semibold py-2 px-4 rounded transition-colors inline-flex items-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
               Limpiar
             </button>
-            <a href="#" className="text-sis-navy text-sm py-2 px-4 rounded transition-colors flex items-center gap-2">
+            <a href="#" className="text-sis-navy text-sm text-bold py-2 px-4 rounded transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" />
               Descargar Reporte Completo
             </a>

@@ -14,7 +14,7 @@ function findCentroPobladoByNum(num: string): CentroPoblado | undefined {
   return records.find((r) => r.num === num);
 }
 
-function parseInstituciones(row: CentroPoblado) {
+export function parseCentroPobladoInstituciones(row: CentroPoblado) {
   const num = parseInt(row.num_de_instituciones_educativas_en_el_centro_poblado, 10) || 0;
   const tipos = row.tipo_de_instituciones_educativas_en_el_centro_poblado?.split('\n').filter(Boolean) || [];
   const niveles = row.nivel_de_las_instituciones_educativas_en_el_centro_poblado?.split('\n').filter(Boolean) || [];
@@ -87,7 +87,7 @@ export default function PueblosIndigenasCentroPoblado() {
     { rango: '65+ años', porcentaje: totalPop > 0 ? Math.round((parseInt(row.mas_de_65_anios, 10) || 0) / totalPop * 100) : 0, color: 'bg-red-500' },
   ];
 
-  const instituciones = parseInstituciones(row);
+  const instituciones = parseCentroPobladoInstituciones(row);
 
   const observacionesList = [];
   if (row.observaciones && row.observaciones.trim() && row.observaciones !== '-') {

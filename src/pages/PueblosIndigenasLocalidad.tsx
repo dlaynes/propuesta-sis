@@ -14,7 +14,7 @@ function findLocalidadByNum(num: string): Localidad | undefined {
   return records.find((r) => r.num === num);
 }
 
-function parseInstituciones(row: Localidad) {
+export function parseLocalidadInstituciones(row: Localidad) {
   const num = parseInt(row.num_de_instituciones_educativas_en_la_localidad, 10) || 0;
   const tipos = row.tipo_de_instituciones_educativas_en_la_localidad?.split('\n').filter(Boolean) || [];
   const niveles = row.nivel_de_las_instituciones_educativas_en_la_localidad?.split('\n').filter(Boolean) || [];
@@ -87,7 +87,7 @@ export default function PueblosIndigenasLocalidad() {
     { rango: '65+ años', porcentaje: totalPop > 0 ? Math.round((parseInt(row.mas_de_65_anios, 10) || 0) / totalPop * 100) : 0, color: 'bg-red-500' },
   ];
 
-  const instituciones = parseInstituciones(row);
+  const instituciones = parseLocalidadInstituciones(row);
 
   const observacionesList = [];
   if (row.observaciones && row.observaciones.trim() && row.observaciones !== '-') {

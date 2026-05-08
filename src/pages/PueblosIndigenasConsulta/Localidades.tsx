@@ -8,6 +8,7 @@ import {
   getTiposLocalidad,
 } from '../../services/localidadService';
 import type { Localidad } from '../../types/localidad';
+import { parseLocalidadInstituciones } from '../PueblosIndigenasLocalidad';
 
 export const Localidades = () => {
   const [nombre, setNombre] = useState('');
@@ -150,14 +151,10 @@ export const Localidades = () => {
         <div className="flex gap-3 mt-4 justify-end">
           <button
             onClick={handleLimpiar}
-            className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2"
+            className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             Limpiar
-          </button>
-          <button className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-2">
-            <Search className="w-4 h-4" />
-            Buscar
           </button>
         </div>
       </div>
@@ -202,12 +199,13 @@ export const Localidades = () => {
             <tbody>
               {paginatedRows.map((row) => {
                 const lenguaPct = getLenguaPercent(row);
+                const instituciones = parseLocalidadInstituciones(row);
                 return (
                   <tr key={row.num} className="border-b border-sis-border hover:bg-gray-50 transition-colors">
                     <td className="px-3 py-3 font-medium text-sis-navy">{row.localidad}</td>
                     <td className="px-3 py-3 text-sis-text-light">{row.pueblo_indigena}</td>
                     <td className="px-3 py-3">
-                      <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
+                      <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded text-nowrap ${
                         row.tipo_localidad.toLowerCase().includes('nativa')
                           ? 'bg-green-100 text-green-700'
                           : 'bg-orange-100 text-orange-700'
@@ -227,7 +225,13 @@ export const Localidades = () => {
                         <span className="text-xs text-sis-text-light">{lenguaPct.toFixed(2)}%</span>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-sis-text-light">{row.tipo_de_educacion_impartida_en_la_localidad || 'N/A'}</td>
+                    <td className="px-3 py-3 text-sis-text-light">
+                      {instituciones.educacion.filter(Boolean).filter(i => i !== '-').map((e) => (
+                          <span key={e} className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-sis-navy/10 text-sis-navy border border-sis-navy/20 mr-1 mb-1">
+                            {e}
+                          </span>
+                      ))}
+                    </td>
                     <td className="px-3 py-3">
                       <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
                         row.comunidad_georeferenciada?.toLowerCase() === 'si'
@@ -240,7 +244,7 @@ export const Localidades = () => {
                     <td className="px-3 py-3">
                       <button
                         onClick={() => navigate('/pueblos-indigenas/localidad/'+row.num)}
-                        className="text-sis-navy hover:text-sis-link text-xs font-medium underline"
+                        className="text-sis-navy hover:text-sis-link text-xs font-medium underline cursor-pointer"
                       >
                         Ver
                       </button>

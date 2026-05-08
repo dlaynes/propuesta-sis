@@ -10,6 +10,7 @@ import {
   getCentroPobladoEducacionTipos,
 } from '../../services/centroPobladoService';
 import type { CentroPoblado } from '../../types/centro_poblado';
+import { parseCentroPobladoInstituciones } from '../PueblosIndigenasCentroPoblado';
 
 export const CentrosPoblados = () => {
   const [nombre, setNombre] = useState('');
@@ -156,14 +157,10 @@ export const CentrosPoblados = () => {
         <div className="flex gap-3 mt-4 justify-end">
           <button
             onClick={handleLimpiar}
-            className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2"
+            className="bg-gray-100 hover:bg-gray-200 text-sis-text font-semibold py-2 px-6 rounded border border-sis-border transition-colors flex items-center gap-2 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             Limpiar
-          </button>
-          <button className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded transition-colors flex items-center gap-2">
-            <Search className="w-4 h-4" />
-            Buscar
           </button>
         </div>
       </div>
@@ -208,13 +205,14 @@ export const CentrosPoblados = () => {
             <tbody>
               {paginatedRows.map((row: CentroPoblado) => {
                 const lenguaPct = row.total_poblacion ? parseFloat(row.hablantes_alguna_lengua_indigena) / parseFloat(row.total_poblacion) || 0 : 0;
+                const instituciones = parseCentroPobladoInstituciones(row);
                 return (
                   <tr key={row.num} className="border-b border-sis-border hover:bg-gray-50 transition-colors">
-                    <td className="px-3 py-3 font-medium text-sis-navy">{row.centro_poblado}</td>
-                    <td className="px-3 py-3 text-sis-text-light">{row.localidad}</td>
+                    <td className="px-3 py-3 font-medium text-sis-navy w-40">{row.centro_poblado}</td>
+                    <td className="px-3 py-3 text-sis-text-light w-60">{row.localidad}</td>
                     <td className="px-3 py-3 text-sis-text-light">{row.pueblo_indigena}</td>
                     <td className="px-3 py-3">
-                      <span className="inline-block text-xs font-medium px-2 py-0.5 rounded bg-orange-100 text-orange-700">
+                      <span className="inline-block text-xs font-medium px-2 py-0.5 rounded bg-orange-100 text-orange-700 text-nowrap">
                         {row.tipo_localidad}
                       </span>
                     </td>
@@ -230,11 +228,17 @@ export const CentrosPoblados = () => {
                         <span className="text-xs text-sis-text-light">{lenguaPct.toFixed(2)}%</span>
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-sis-text-light">{row.tipo_de_educacion_impartida_en_el_centro_poblado || 'N/A'}</td>
+                    <td className="px-3 py-3 text-sis-text-light">
+                      {instituciones.educacion.filter(Boolean).filter(i => i !== '-').map((e) => (
+                        <span key={e} className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-sis-navy/10 text-sis-navy border border-sis-navy/20 mr-1 mb-1">
+                          {e}
+                        </span>
+                      ))}
+                    </td>
                     <td className="px-3 py-3">
                       <button
                         onClick={() => navigate('/pueblos-indigenas/centro-poblado/'+row.num)}
-                        className="text-sis-navy hover:text-sis-link text-xs font-medium underline"
+                        className="text-sis-navy hover:text-sis-link text-xs font-medium underline cursor-pointer"
                       >
                         Ver
                       </button>

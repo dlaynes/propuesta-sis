@@ -98,12 +98,12 @@ export default function PueblosIndigenasConsulta() {
         <div className="text-center mb-6 flex justify-center gap-2">
           <button
             onClick={() => navigate('/pueblos-indigenas/estadisticas')}
-            className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-4 rounded transition-colors"
+            className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-4 rounded transition-colors cursor-pointer"
           >
             Ver más datos estadísticos
           </button>
 
-          <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-2 px-4 rounded transition-colors flex items-center gap-1.5">
+          <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-2 px-4 rounded transition-colors flex items-center gap-1.5 cursor-pointer">
             <Download className="w-3.5 h-3.5" />
             Descargar Reporte Completo
           </button>

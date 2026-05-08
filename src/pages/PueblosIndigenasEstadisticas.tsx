@@ -28,6 +28,8 @@ import {
   type DepartamentoStat,
 } from '../types/pueblos_indigenas';
 
+const OTROS_OFFSET = 10; // Número de pueblos a mostrar antes de agrupar en "Otros"
+
 export default function PueblosIndigenasEstadisticas() {
   const navigate = useNavigate();
   const departments = useMemo(() => getAllDepartments(), []);
@@ -65,6 +67,20 @@ export default function PueblosIndigenasEstadisticas() {
       setDeptRows(d);
     });
   }, [ubigeoPrefix]);
+
+  const chartEntries = useMemo(() => {
+    const sorted = [...pueblosRows].sort((a, b) => b.localidadesCount - a.localidadesCount);
+    const totalLocalidades = sorted.reduce((s, p) => s + p.localidadesCount, 0);
+    const topN = sorted.slice(0, OTROS_OFFSET);
+    const hasOtros = sorted.length > OTROS_OFFSET;
+    const otrosCount = hasOtros
+      ? sorted.slice(OTROS_OFFSET).reduce((s, p) => s + p.localidadesCount, 0)
+      : 0;
+    const entries = hasOtros
+      ? [...topN, { nombre: 'Otros', familiaLinguistica: 'Diversas', localidadesCount: otrosCount, centrosPobladosCount: 0, poblacionTotal: 0, porcentajePoblacion: 0, hablantes: 0 }]
+      : topN;
+    return { entries, totalLocalidades };
+  }, [pueblosRows]);
 
   const resumenCards = !stats ? [] : [
     {
@@ -260,41 +276,101 @@ export default function PueblosIndigenasEstadisticas() {
           ))}
         </div>
 
-        {/* Distribución por rango de población */}
-        <div className="bg-white rounded-lg border border-sis-border p-6 mb-8">
-          <div className="flex items-center mb-4">
-            <h3 className="font-bold text-sis-navy">Distribución por Rango de Población</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-sis-border">
-                  {['Rango', 'N° de Localidades', '%', 'Acumulado %'].map((h) => (
-                    <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {poblacionRows.map((r) => (
-                  <tr key={r.rango} className="border-b border-sis-border hover:bg-gray-50">
-                    <td className="px-3 py-3 text-sis-navy">{r.rango}</td>
-                    <td className="px-3 py-3 text-sis-text-light">{r.localidades.toLocaleString()}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-sis-navy rounded-full"
-                            style={{ width: `${r.porcentaje}%` }}
-                          />
-                        </div>
-                        <span className="text-sis-text-light">{r.porcentaje}%</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 text-sis-text-light">{r.acumulado}%</td>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+          {/* Distribución por rango de población */}
+          <div className="bg-white rounded-lg border border-sis-border p-6">
+            <div className="flex items-center mb-4">
+              <h3 className="font-bold text-sis-navy">Distribución por Rango de Población</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-sis-border">
+                    {['Rango', 'N° de Localidades', '%', 'Acumulado %'].map((h) => (
+                      <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {poblacionRows.map((r) => (
+                    <tr key={r.rango} className="border-b border-sis-border hover:bg-gray-50">
+                      <td className="px-3 py-3 text-sis-navy">{r.rango}</td>
+                      <td className="px-3 py-3 text-sis-text-light">{r.localidades.toLocaleString()}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-sis-navy rounded-full"
+                              style={{ width: `${r.porcentaje}%` }}
+                            />
+                          </div>
+                          <span className="text-sis-text-light">{r.porcentaje}%</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-sis-text-light">{r.acumulado}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Distribución por pueblo indígena en localidades (Gráfico) */}
+          <div className="bg-white rounded-lg border border-sis-border p-6">
+            <div className="flex items-center mb-4">
+              <h3 className="font-bold text-sis-navy flex items-center gap-2">
+                <Users className="w-5 h-5 text-sis-text-light" />
+                Distribución por Pueblo Indígena (Localidades)
+              </h3>
+            </div>
+            {(() => {
+              const { entries, totalLocalidades } = chartEntries;
+              const R = 15.9;
+              const C = 2 * Math.PI * R;
+              const palette = ['#1a3a5c', '#22c55e', '#e07020', '#8b5cf6', '#eab308', '#6b7280', '#f97316', '#3b82f6', '#ec4899', '#14b8a6', '#db2777', '#10b981'];
+              const segments = entries.map((entry, i) => {
+                const pct = totalLocalidades > 0 ? (entry.localidadesCount / totalLocalidades) * 100 : 0;
+                const arc = (pct / 100) * C;
+                const prevPcts = entries.slice(0, i).reduce((sum, e) => sum + (totalLocalidades > 0 ? (e.localidadesCount / totalLocalidades) * 100 : 0), 0);
+                const offset = C / 4 - (prevPcts / 100) * C;
+                return { ...entry, pct, arc, offset, color: palette[i % palette.length] };
+              });
+              return (
+                <>
+                  <div className="flex items-center justify-center h-48">
+                    <div className="relative w-40 h-40">
+                      <svg viewBox="0 0 36 36" className="w-full h-full">
+                        {segments.map((seg, i) => (
+                          <circle
+                            key={i}
+                            cx="18"
+                            cy="18"
+                            r={R}
+                            fill="none"
+                            stroke={seg.color}
+                            strokeWidth="3.5"
+                            strokeDasharray={`${seg.arc} ${C - seg.arc}`}
+                            strokeDashoffset={seg.offset}
+                          />
+                        ))}
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-sm font-bold text-sis-navy">{totalLocalidades.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 justify-center mt-4">
+                    {segments.map((seg) => (
+                      <div key={seg.nombre} className="flex items-center gap-1.5 text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
+                        <span className="text-sis-text-light">{seg.nombre} ({seg.pct.toFixed(1)}%)</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -337,7 +413,7 @@ export default function PueblosIndigenasEstadisticas() {
         {/* Distribución por pueblo indígena */}
         <div className="bg-white rounded-lg border border-sis-border p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-sis-navy">Distribución por Pueblo Indígena</h3>
+            <h3 className="font-bold text-sis-navy">Distribución por Pueblo Indígena (Centros poblados)</h3>
             <span className="text-sm text-sis-text-light">
               Mostrando {pueblosRows.length > 0 ? `${(pueblosPage - 1) * pueblosPageSize + 1}-${Math.min(pueblosPage * pueblosPageSize, pueblosRows.length)}` : '0'} de {pueblosRows.length.toLocaleString()}
             </span>
