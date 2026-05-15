@@ -107,14 +107,14 @@ export default function PueblosIndigenasEstadisticas() {
     {
       label: 'Con Educación',
       value: stats.conEscolarizado.toLocaleString(),
-      sub: `${((stats.conEscolarizado / stats.totalLocalidades) * 100).toFixed(1)}% del total`,
+      sub: `${stats.totalLocalidades ? ((stats.conEscolarizado / stats.totalLocalidades) * 100).toFixed(1) : '--'}% del total`,
       icon: BookOpen,
       accent: 'border-l-sis-orange',
     },
     {
       label: 'Tituladas',
       value: stats.conTitulacion.toLocaleString(),
-      sub: `${((stats.conTitulacion / stats.totalLocalidades) * 100).toFixed(1)}% del total`,
+      sub: `${stats.totalLocalidades ? ((stats.conTitulacion / stats.totalLocalidades) * 100).toFixed(1) : '--'}% del total`,
       icon: GraduationCap,
       accent: 'border-l-purple-500',
     },
@@ -321,7 +321,7 @@ export default function PueblosIndigenasEstadisticas() {
             <div className="flex items-center mb-4">
               <h3 className="font-bold text-sis-navy flex items-center gap-2">
                 <Users className="w-5 h-5 text-sis-text-light" />
-                Distribución por Pueblo Indígena (Localidades)
+                Distribución por Pueblo Indígena (Centros poblados)
               </h3>
             </div>
             {(() => {
@@ -413,7 +413,7 @@ export default function PueblosIndigenasEstadisticas() {
         {/* Distribución por pueblo indígena */}
         <div className="bg-white rounded-lg border border-sis-border p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-sis-navy">Distribución por Pueblo Indígena (Centros poblados)</h3>
+            <h3 className="font-bold text-sis-navy">Distribución por Pueblo Indígena (Localidades)</h3>
             <span className="text-sm text-sis-text-light">
               Mostrando {pueblosRows.length > 0 ? `${(pueblosPage - 1) * pueblosPageSize + 1}-${Math.min(pueblosPage * pueblosPageSize, pueblosRows.length)}` : '0'} de {pueblosRows.length.toLocaleString()}
             </span>
