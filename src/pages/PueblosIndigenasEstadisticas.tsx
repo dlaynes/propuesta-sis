@@ -18,6 +18,7 @@ import {
   getDistrictsByProvinceId,
 } from '../services/ubigeoService';
 import { Pagination } from '../components/Pagination';
+import PeruMap from '../components/PeruMap/PeruMap';
 import {
   computeResumenStats,
   computePueblosStats,
@@ -31,6 +32,38 @@ import {
 
 const OTROS_OFFSET = 10; // Número de pueblos a mostrar antes de agrupar en "Otros"
 
+function hexToRgb(hex: string): [number, number, number] {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
+    : [0, 0, 0];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return `#${[r, g, b].map((x) => Math.round(x).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function interpolateColor(color1: string, color2: string, factor: number): string {
+  const [r1, g1, b1] = hexToRgb(color1);
+  const [r2, g2, b2] = hexToRgb(color2);
+  return rgbToHex(
+    r1 + (r2 - r1) * factor,
+    g1 + (g2 - g1) * factor,
+    b1 + (b2 - b1) * factor
+  );
+}
+
+function computeDepartmentHeatMap(deptRows: DepartamentoStat[]): Record<string, string> {
+  if (deptRows.length === 0) return {};
+  const max = Math.max(...deptRows.map((d) => d.localidades));
+  const fills: Record<string, string> = {};
+  for (const row of deptRows) {
+    const intensity = max > 0 ? row.localidades / max : 0;
+    fills[row.codigo] = interpolateColor('#f0fdf4', '#15803d', intensity);
+  }
+  return fills;
+}
+
 export default function PueblosIndigenasEstadisticas() {
   const navigate = useNavigate();
   const departments = useMemo(() => getAllDepartments(), []);
@@ -41,6 +74,7 @@ export default function PueblosIndigenasEstadisticas() {
 
   const [pueblosPage, setPueblosPage] = useState(1);
   const [pueblosPageSize, setPueblosPageSize] = useState(10);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 
   // Derive ubigeo prefix from dropdown selection
   const ubigeoPrefix = useMemo(() => {
@@ -85,6 +119,12 @@ export default function PueblosIndigenasEstadisticas() {
       : topN;
     return { entries, totalLocalidades };
   }, [pueblosRows]);
+
+  const handleRegionClick = (deptCode: string) => {
+    setSelectedRegion((prev) => (prev === deptCode ? null : deptCode));
+  };
+
+  const selectedDept = selectedRegion ? deptRows.find((d) => d.codigo === selectedRegion) : undefined;
 
   const resumenCards = !stats ? [] : [
     {
@@ -378,40 +418,107 @@ export default function PueblosIndigenasEstadisticas() {
           </div>
         </div>
 
-        {/* Distribución por departamentos */}
-        <div className="bg-white rounded-lg border border-sis-border p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-sis-navy">Distribución por Departamentos</h3>
+        {/* Distribución por departamentos + Mapa de calor */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+          <div className="bg-white rounded-lg border border-sis-border p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-sis-navy">Mapa de Calor — Localidades por Departamento</h3>
+            </div>
+            <div className="h-[400px] w-full">
+              <PeruMap
+                activeRegion={selectedRegion ?? undefined}
+                departmentFills={computeDepartmentHeatMap(deptRows) as Record<string, string>}
+                departmentStrokes={Object.fromEntries(deptRows.map((r) => [r.codigo, '#166534'])) as Record<string, string>}
+                departmentOpacities={Object.fromEntries(deptRows.map((r) => [r.codigo, 0.9])) as Record<string, number>}
+                onRegionClick={handleRegionClick}
+                title={null}
+                width={600}
+                height={400}
+              />
+            </div>
+            <div className="flex items-center justify-center gap-4 mt-3">
+              <div className="flex items-center gap-2 text-xs text-sis-text-light">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#f0fdf4' }} />
+                <span>Bajo</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-sis-text-light">
+                <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#15803d' }} />
+                <span>Alto</span>
+              </div>
+            </div>
+
+            {selectedDept && (
+              <div className="mt-4 border border-sis-border rounded-lg p-4 bg-sis-bg/30">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-bold text-sis-navy text-sm">{selectedDept.nombre}</h4>
+                  <button
+                    onClick={() => setSelectedRegion(null)}
+                    className="text-sis-text-light hover:text-sis-navy text-xs"
+                    aria-label="Cerrar detalles"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-sis-text-light text-xs">Localidades</p>
+                    <p className="font-semibold text-sis-navy">{selectedDept.localidades.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sis-text-light text-xs">Centros Poblados</p>
+                    <p className="font-semibold text-sis-navy">{selectedDept.centrosPoblados.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sis-text-light text-xs">Población</p>
+                    <p className="font-semibold text-sis-navy">{selectedDept.poblacion.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sis-text-light text-xs">% del Total</p>
+                    <p className="font-semibold text-sis-navy">{selectedDept.porcentaje}%</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-sis-border">
-                  {['Departamento', 'N° Localidades', 'Centros Poblados', 'Población', '%'].map((h) => (
-                    <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3" scope="col">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {deptRows.map((r) => (
-                  <tr key={r.codigo} className="border-b border-sis-border hover:bg-gray-50">
-                    <td className="px-3 py-3 text-sis-navy">{r.nombre}</td>
-                    <td className="px-3 py-3 text-sis-text-light">{r.localidades.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-sis-text-light">{r.centrosPoblados.toLocaleString()}</td>
-                    <td className="px-3 py-3 text-sis-text-light">{r.poblacion.toLocaleString()}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 rounded-full" style={{ width: `${r.porcentaje}%` }} />
-                        </div>
-                        <span className="text-sis-text-light">{r.porcentaje}%</span>
-                      </div>
-                    </td>
+
+          <div className="bg-white rounded-lg border border-sis-border p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-sis-navy">Distribución por Departamentos</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-sis-border">
+                    {['Departamento', 'N° Localidades', 'Centros Poblados', 'Población', '%'].map((h) => (
+                      <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3" scope="col">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {deptRows.map((r) => (
+                    <tr key={r.codigo} className={"border-b border-sis-border hover:bg-gray-50" + (selectedRegion === r.codigo ? " bg-gray-100" : "")}
+                      onClick={() => handleRegionClick(r.codigo)}
+                      >
+                      <td className="px-3 py-3 text-sis-navy">{r.nombre}</td>
+                      <td className="px-3 py-3 text-sis-text-light">{r.localidades.toLocaleString()}</td>
+                      <td className="px-3 py-3 text-sis-text-light">{r.centrosPoblados.toLocaleString()}</td>
+                      <td className="px-3 py-3 text-sis-text-light">{r.poblacion.toLocaleString()}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-green-500 rounded-full" style={{ width: `${r.porcentaje}%` }} />
+                          </div>
+                          <span className="text-sis-text-light">{r.porcentaje}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
+
         </div>
 
         {/* Distribución por pueblo indígena */}

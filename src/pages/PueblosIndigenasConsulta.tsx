@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, useEffect } from 'react';
 import { useAnnouncer } from '../hooks/useAnnouncer';
 import { useNavigate } from 'react-router-dom';
 import { HeroBanner } from '../components/HeroBanner';
-import { TrendingUp, Users, TreePine, BarChart3, Download } from 'lucide-react';
+import { TrendingUp, Users, TreePine, BarChart3, Download, Map } from 'lucide-react';
 import { Tabs } from '../components/Tabs';
 import { Spinner } from '../components/Loader';
 import { computeResumenStats, type ResumenStats } from '../types/pueblos_indigenas';
@@ -106,6 +106,12 @@ export default function PueblosIndigenasConsulta() {
             className="bg-sis-red hover:bg-sis-red-hover text-white font-semibold py-2 px-4 rounded transition-colors cursor-pointer"
           >
             Ver más datos estadísticos
+          </button>
+
+          <button className="bg-sis-orange hover:bg-sis-orange-light text-white font-medium py-2 px-4 rounded transition-colors flex items-center gap-1.5 cursor-pointer"
+            onClick={() => navigate('/pueblos-indigenas/mapa')}>
+            <Map className="w-3.5 h-3.5" />
+            Mapa de localidades
           </button>
 
           <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-2 px-4 rounded transition-colors flex items-center gap-1.5 cursor-pointer">

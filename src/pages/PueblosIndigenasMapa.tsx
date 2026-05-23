@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAnnouncer } from '../hooks/useAnnouncer';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Popup } from 'react-leaflet';
+import { AccessibleMarker } from '../components/AccessibleMarker';
 import { HeroBanner } from '../components/HeroBanner';
 import {
   ArrowLeft,
@@ -19,27 +20,44 @@ import {
   getAllDepartments,
   getProvincesByDepartmentId,
   getDistrictsByProvinceId,
+  findDistrictById,
+  findProvinceById,
+  findDepartmentById,
 } from '../services/ubigeoService';
+import { getAllLocalidades } from '../services/localidadService';
+
 import L from 'leaflet';
 
-const tipoOptions = [
-  'Todas',
-  'Comunidad Nativa',
-  'Centro Poblado',
-  'Pueblo Indígena',
-  'Comunidad Campesina',
+
+const COLOR_PALETTE = [
+  '#22c55e', '#3b82f6', '#e07020', '#8b5cf6', '#eab308',
+  '#ef4444', '#06b6d4', '#f97316', '#84cc16', '#d946ef',
 ];
 
-const puebloColors: Record<string, string> = {
-  "Asháninka": '#22c55e',
-  "Awajún": '#3b82f6',
-  "Shipibo-Konibo": '#e07020',
-  "Quechua": '#8b5cf6',
-  "Aymara": '#eab308',
-  "Otros": '#6b7280',
-};
+function computePuebloColors(localidades: LocalidadMarker[]): Record<string, string> {
+  const counts: Record<string, number> = {};
+  for (const loc of localidades) {
+    if (loc.pueblo && loc.pueblo !== '-') {
+      counts[loc.pueblo] = (counts[loc.pueblo] || 0) + 1;
+    }
+  }
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const top = sorted.slice(0, COLOR_PALETTE.length);
+  const colors: Record<string, string> = {};
+  top.forEach(([pueblo], i) => {
+    colors[pueblo] = COLOR_PALETTE[i];
+  });
+  colors['Otros'] = '#6b7280';
+  return colors;
+}
 
-function getPuebloColor(pueblo: string): string {
+function isPuebloVisible(pueblo: string, puebloColors: Record<string, string>, activeLayers: string[]): boolean {
+  if (activeLayers.includes(pueblo)) return true;
+  if (!puebloColors[pueblo] && activeLayers.includes('Otros')) return true;
+  return false;
+}
+
+function getPuebloColor(pueblo: string, puebloColors: Record<string, string>): string {
   return puebloColors[pueblo] || puebloColors.Otros;
 }
 
@@ -56,81 +74,6 @@ interface LocalidadMarker {
   lat: number;
   lng: number;
 }
-
-const localidadesData: LocalidadMarker[] = [
-  {
-    id: '1', nombre: 'Marankiari Bajo', pueblo: 'Asháninka',
-    departamento: 'Junín', provincia: 'Chanchamayo', distrito: 'Perené',
-    tipo: 'Comunidad Nativa', poblacion: 1245, eib: true,
-    lat: -11.05, lng: -75.18,
-  },
-  {
-    id: '2', nombre: 'Urakusa', pueblo: 'Awajún',
-    departamento: 'Amazonas', provincia: 'Condorcanqui', distrito: 'Nieva',
-    tipo: 'Comunidad Nativa', poblacion: 892, eib: true,
-    lat: -4.48, lng: -77.92,
-  },
-  {
-    id: '3', nombre: 'San Francisco de Yarinacocha', pueblo: 'Shipibo-Konibo',
-    departamento: 'Ucayali', provincia: 'Coronel Portillo', distrito: 'Yarinacocha',
-    tipo: 'Comunidad Nativa', poblacion: 2156, eib: true,
-    lat: -8.38, lng: -74.58,
-  },
-  {
-    id: '4', nombre: 'Pampa Michi', pueblo: 'Asháninka',
-    departamento: 'Junín', provincia: 'Satipo', distrito: 'Río Tambo',
-    tipo: 'Centro Poblado', poblacion: 567, eib: false,
-    lat: -11.22, lng: -74.25,
-  },
-  {
-    id: '5', nombre: 'Nuevo Progreso', pueblo: 'Quechua',
-    departamento: 'Loreto', provincia: 'Maynas', distrito: 'Fernando Lores',
-    tipo: 'Pueblo Indígena', poblacion: 432, eib: true,
-    lat: -3.72, lng: -73.28,
-  },
-  {
-    id: '6', nombre: 'Puerto Esperanza', pueblo: 'Shipibo-Konibo',
-    departamento: 'Ucayali', provincia: 'Atalaya', distrito: 'Tahuanía',
-    tipo: 'Comunidad Nativa', poblacion: 1103, eib: true,
-    lat: -9.82, lng: -70.72,
-  },
-  {
-    id: '7', nombre: 'Cashibocoya', pueblo: 'Quechua',
-    departamento: 'Pasco', provincia: 'Oxapampa', distrito: 'Villa Rica',
-    tipo: 'Centro Poblado', poblacion: 389, eib: false,
-    lat: -10.35, lng: -74.85,
-  },
-  {
-    id: '8', nombre: 'Santa Clara de Uchunya', pueblo: 'Shipibo-Konibo',
-    departamento: 'Ucayali', provincia: 'Coronel Portillo', distrito: 'Callería',
-    tipo: 'Comunidad Nativa', poblacion: 1567, eib: true,
-    lat: -8.42, lng: -74.48,
-  },
-  {
-    id: '9', nombre: 'Nueva Esperanza', pueblo: 'Awajún',
-    departamento: 'Loreto', provincia: 'Datem del Marañón', distrito: 'Manseriche',
-    tipo: 'Pueblo Indígena', poblacion: 678, eib: true,
-    lat: -4.05, lng: -73.55,
-  },
-  {
-    id: '10', nombre: 'Nuevo Eden', pueblo: 'Otros',
-    departamento: 'Madre de Dios', provincia: 'Tambopata', distrito: 'Tambopata',
-    tipo: 'Comunidad Nativa', poblacion: 245, eib: false,
-    lat: -12.55, lng: -70.15,
-  },
-  {
-    id: '11', nombre: 'Huayllati', pueblo: 'Aymara',
-    departamento: 'Puno', provincia: 'San Antonio de Putina', distrito: 'Sina',
-    tipo: 'Comunidad Campesina', poblacion: 823, eib: true,
-    lat: -14.78, lng: -69.95,
-  },
-  {
-    id: '12', nombre: 'San Juan de Arama', pueblo: 'Asháninka',
-    departamento: 'Junín', provincia: 'Satipo', distrito: 'Río Tambo',
-    tipo: 'Comunidad Nativa', poblacion: 934, eib: true,
-    lat: -11.38, lng: -74.42,
-  },
-];
 
 function createCustomIcon(color: string) {
   return L.divIcon({
@@ -152,7 +95,48 @@ export default function PueblosIndigenasMapa() {
   const [districtId, setDistrictId] = useState('');
   const [tipoFilter, setTipoFilter] = useState('Todas');
   const [selectedLocality, setSelectedLocality] = useState<LocalidadMarker | null>(null);
-  const [activeLayers, setActiveLayers] = useState<string[]>(Object.keys(puebloColors));
+  const [activeLayers, setActiveLayers] = useState<string[]>([]);
+  const [localidadesData, setLocalidadesData] = useState<LocalidadMarker[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getAllLocalidades().then((records) => {
+      const mapped: LocalidadMarker[] = records
+        .map((r) => {
+          const district = findDistrictById(r.ubigeo_codigo.slice(0, 6));
+          const province = district ? findProvinceById(district.province_id) : undefined;
+          const department = province ? findDepartmentById(province.department_id) : undefined;
+          const record = r as unknown as Record<string, unknown>;
+          const lat = record.lat !== undefined ? Number(record.lat) : district?.lat;
+          const lng = record.lng !== undefined ? Number(record.lng) : district?.lng;
+          if (lat == null || lng == null) return null;
+          const eib = (r.tipo_de_educacion_impartida_en_la_localidad || '')
+            .toLowerCase()
+            .includes('intercultural') ||
+            (r.tipo_de_educacion_impartida_en_la_localidad || '')
+            .toLowerCase()
+            .includes('biling');
+          return {
+            id: r.num,
+            nombre: r.localidad,
+            pueblo: r.pueblo_indigena,
+            departamento: department?.name || '',
+            provincia: province?.name || '',
+            distrito: district?.name || '',
+            tipo: r.tipo_localidad,
+            poblacion: parseInt(r.total_poblacion, 10) || 0,
+            eib,
+            lat,
+            lng,
+          };
+        })
+        .filter((m): m is LocalidadMarker => m !== null);
+      setLocalidadesData(mapped);
+      const colors = computePuebloColors(mapped);
+      setActiveLayers(Object.keys(colors));
+      setLoading(false);
+    });
+  }, []);
 
   const provinces = useMemo<Province[]>(() => {
     if (!departmentId) return [];
@@ -194,20 +178,18 @@ export default function PueblosIndigenasMapa() {
     );
   }
 
+  const puebloColors = computePuebloColors(localidadesData);
+
   const filteredLocalidades = useMemo(() => {
     return localidadesData.filter((loc) => {
       if (departmentId && loc.departamento !== departments.find((d) => d.id === departmentId)?.name) return false;
+      if (provinceId && loc.provincia !== provinces.find((p) => p.id === provinceId)?.name) return false;
+      if (districtId && loc.distrito !== districts.find((d) => d.id === districtId)?.name) return false;
       if (tipoFilter !== 'Todas' && loc.tipo !== tipoFilter) return false;
-      if (!activeLayers.includes(loc.pueblo) && !activeLayers.includes('Otros')) {
-        if (!puebloColors[loc.pueblo]) {
-          if (!activeLayers.includes('Otros')) return false;
-        } else {
-          return false;
-        }
-      }
+      if (!isPuebloVisible(loc.pueblo, puebloColors, activeLayers)) return false;
       return true;
     });
-  }, [departmentId, tipoFilter, activeLayers, departments]);
+  }, [localidadesData, departmentId, provinceId, districtId, tipoFilter, activeLayers, puebloColors, departments, provinces, districts]);
 
   const stats = useMemo(() => {
     const total = filteredLocalidades.length;
@@ -220,12 +202,34 @@ export default function PueblosIndigenasMapa() {
     announce(`${stats.total} localidades indígenas mostradas en el mapa.`);
   }, [stats.total, announce]);
 
+  useEffect(() => {
+    if (selectedLocality) {
+      announce(`Localidad seleccionada: ${selectedLocality.nombre}, ${selectedLocality.distrito}, ${selectedLocality.departamento}.`);
+    }
+  }, [selectedLocality, announce]);
+
   const activeFilterCount = [
     departmentId,
     provinceId,
     districtId,
     tipoFilter !== 'Todas',
   ].filter(Boolean).length;
+
+  if (loading) {
+    return (
+      <>
+        <HeroBanner
+          title="Mapa de Localidades Indígenas"
+          subtitle="Cargando datos..."
+        />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sis-navy"></div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -236,7 +240,7 @@ export default function PueblosIndigenasMapa() {
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <button
-          onClick={() => navigate('/localidades')}
+          onClick={() => navigate('/pueblos-indigenas')}
           className="text-sis-navy hover:text-sis-link font-medium text-sm mb-6 flex items-center gap-1 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -245,7 +249,7 @@ export default function PueblosIndigenasMapa() {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-sis-navy">Mapa Interactivo</h2>
+            <h2 className="text-xl font-bold text-sis-navy">Mapa Interactivo de localidades</h2>
             <p className="text-sm text-sis-text-light">
               {stats.total} localidades visibles | {stats.poblacion.toLocaleString()} habitantes
             </p>
@@ -302,7 +306,7 @@ export default function PueblosIndigenasMapa() {
                 <option key={d.id} value={d.id}>{d.name}</option>
               ))}
             </select>
-            <select
+            {/*<select
               id="map-tipo"
               aria-label="Tipo de localidad"
               value={tipoFilter}
@@ -312,7 +316,7 @@ export default function PueblosIndigenasMapa() {
               {tipoOptions.map((t) => (
                 <option key={t} value={t}>{t}</option>
               ))}
-            </select>
+            </select>*/}
             {activeFilterCount > 0 && (
               <span className="text-xs text-sis-text-light bg-sis-bg px-2 py-1 rounded">
                 {activeFilterCount} filtro{activeFilterCount > 1 ? 's' : ''} activo{activeFilterCount > 1 ? 's' : ''}
@@ -336,10 +340,11 @@ export default function PueblosIndigenasMapa() {
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
                   {filteredLocalidades.map((loc) => (
-                    <Marker
+                    <AccessibleMarker
                       key={loc.id}
                       position={[loc.lat, loc.lng]}
-                      icon={createCustomIcon(getPuebloColor(loc.pueblo))}
+                      icon={createCustomIcon(getPuebloColor(loc.pueblo, puebloColors))}
+                      ariaLabel={loc.nombre}
                       eventHandlers={{
                         click: () => setSelectedLocality(loc),
                       }}
@@ -354,43 +359,44 @@ export default function PueblosIndigenasMapa() {
                           <p className="text-sis-text-light">EIB: <span className={`font-medium ${loc.eib ? 'text-green-600' : 'text-red-600'}`}>{loc.eib ? 'Sí' : 'No'}</span></p>
                         </div>
                       </Popup>
-                    </Marker>
+                    </AccessibleMarker>
                   ))}
                 </MapContainer>
+              </div>
+
+              {/* Leyenda */}
+              <div className="bg-white border-t border-sis-border p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Layers className="w-4 h-4 text-sis-navy" />
+                  <h4 className="font-bold text-sis-navy text-sm">Leyenda — Pueblos Indígenas <small>(Clic para filtrar)</small></h4>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(puebloColors).map(([pueblo, color]) => (
+                    <button
+                      key={pueblo}
+                      onClick={() => toggleLayer(pueblo)}
+                      className={`flex items-center gap-1.5 text-sm px-2 py-1 rounded transition-colors ${
+                        activeLayers.includes(pueblo)
+                          ? 'bg-gray-50 text-sis-text'
+                          : 'text-gray-400 line-through opacity-60'
+                      }`}
+                    >
+                      <span
+                        className="w-3 h-3 rounded-full border border-white shadow-sm"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span>{pueblo}</span>
+                      <span className="text-xs text-sis-text-light">
+                        {localidadesData.filter((l) => (pueblo === 'Otros' ? !puebloColors[l.pueblo] : l.pueblo === pueblo)).length}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-sis-border p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Layers className="w-4 h-4 text-sis-navy" />
-                <h4 className="font-bold text-sis-navy text-sm">Leyenda — Pueblos Indígenas</h4>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(puebloColors).map(([pueblo, color]) => (
-                  <button
-                    key={pueblo}
-                    onClick={() => toggleLayer(pueblo)}
-                    className={`flex items-center gap-2 w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${
-                      activeLayers.includes(pueblo)
-                        ? 'bg-gray-50 text-sis-text'
-                        : 'text-gray-400 line-through'
-                    }`}
-                  >
-                    <span
-                      className="w-3 h-3 rounded-full border border-white shadow-sm"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span>{pueblo}</span>
-                    <span className="ml-auto text-xs text-sis-text-light">
-                      {localidadesData.filter((l) => (pueblo === 'Otros' ? !puebloColors[l.pueblo] : l.pueblo === pueblo)).length}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="bg-white rounded-lg border border-sis-border p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -427,7 +433,7 @@ export default function PueblosIndigenasMapa() {
                     <span>Tipo: {selectedLocality.tipo}</span>
                   </div>
                   <button
-                    onClick={() => navigate('/localidades/detalle')}
+                    onClick={() => selectedLocality && navigate(`/pueblos-indigenas/localidad/${selectedLocality.id}`)}
                     className="mt-2 text-sis-link hover:underline text-xs font-medium"
                   >
                     Ver ficha completa →

@@ -10,7 +10,8 @@ import {
   findDistrictById,
 } from '../services/ubigeoService';
 import { getAllUleRecords } from '../services/uleService';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Popup, useMap } from 'react-leaflet';
+import { AccessibleMarker } from '../components/AccessibleMarker';
 import { Pagination } from '../components/Pagination';
 import L from 'leaflet';
 import type { LocalEmpadronamiento } from '../types/local_empadronamiento';
@@ -398,11 +399,12 @@ export default function LocalesEmpadronamiento() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {validResults.map((loc) => (
-                <Marker
+                <AccessibleMarker
                   key={loc.codigo}
                   position={[loc.lat!, loc.lng!]}
                   icon={createUleIcon()}
-                  ref={(marker) => {
+                  ariaLabel={loc.nombre}
+                  markerRef={(marker) => {
                     if (marker) {
                       markerRefs.current.set(loc.codigo, marker);
                     }
@@ -421,7 +423,7 @@ export default function LocalesEmpadronamiento() {
                       </p>
                     </div>
                   </Popup>
-                </Marker>
+                </AccessibleMarker>
               ))}
               {hasSearched && validResults.length > 0 && (
                 <MapUpdater results={validResults} />
