@@ -1,34 +1,47 @@
-import localidadesData from '../data/json/localidades.json';
 import type { Localidad } from '../types/localidad';
 
-const records: Localidad[] = localidadesData as Localidad[];
+let localidadesPromise: Promise<Localidad[]> | null = null;
+
+async function loadLocalidades(): Promise<Localidad[]> {
+  if (!localidadesPromise) {
+    localidadesPromise = fetch('/data/json/localidades.json')
+      .then((res) => res.json())
+      .then((data) => data as Localidad[]);
+  }
+  return localidadesPromise;
+}
 
 /** Get all localidades sorted by name */
-export function getAllLocalidades(): Localidad[] {
+export async function getAllLocalidades(): Promise<Localidad[]> {
+  const records = await loadLocalidades();
   return [...records].sort((a, b) => a.localidad.localeCompare(b.localidad));
 }
 
 /** Find a localidad by its num ID */
-export function findLocalidadByNum(num: string): Localidad | undefined {
+export async function findLocalidadByNum(num: string): Promise<Localidad | undefined> {
+  const records = await loadLocalidades();
   return records.find((r) => r.num === num.trim());
 }
 
 /** Find a localidad by its ubigeo code */
-export function findLocalidadByUbigeo(ubigeo: string): Localidad | undefined {
+export async function findLocalidadByUbigeo(ubigeo: string): Promise<Localidad | undefined> {
+  const records = await loadLocalidades();
   return records.find((r) => r.ubigeo_codigo === ubigeo.trim());
 }
 
 /** Search localidades by name (case-insensitive, partial match) */
-export function searchLocalidadesByName(query: string): Localidad[] {
+export async function searchLocalidadesByName(query: string): Promise<Localidad[]> {
+  const records = await loadLocalidades();
   const q = query.trim().toLowerCase();
-  if (!q) return getAllLocalidades();
+  if (!q) return [...records].sort((a, b) => a.localidad.localeCompare(b.localidad));
   return records
     .filter((r) => r.localidad.toLowerCase().includes(q))
     .sort((a, b) => a.localidad.localeCompare(b.localidad));
 }
 
 /** Search localidades by pueblo indígena */
-export function getLocalidadesByPueblo(pueblo: string): Localidad[] {
+export async function getLocalidadesByPueblo(pueblo: string): Promise<Localidad[]> {
+  const records = await loadLocalidades();
   const p = pueblo.trim().toLowerCase();
   return records
     .filter((r) => r.pueblo_indigena.toLowerCase() === p)
@@ -36,7 +49,8 @@ export function getLocalidadesByPueblo(pueblo: string): Localidad[] {
 }
 
 /** Search localidades by tipo */
-export function getLocalidadesByTipo(tipo: string): Localidad[] {
+export async function getLocalidadesByTipo(tipo: string): Promise<Localidad[]> {
+  const records = await loadLocalidades();
   const t = tipo.trim().toLowerCase();
   return records
     .filter((r) => r.tipo_localidad.toLowerCase() === t)
@@ -44,7 +58,8 @@ export function getLocalidadesByTipo(tipo: string): Localidad[] {
 }
 
 /** Search localidades by partial ubigeo (e.g. first 2 digits = dept, 4 = province, 6 = district) */
-export function getLocalidadesByUbigeoPrefix(prefix: string): Localidad[] {
+export async function getLocalidadesByUbigeoPrefix(prefix: string): Promise<Localidad[]> {
+  const records = await loadLocalidades();
   const p = prefix.trim();
   return records
     .filter((r) => r.ubigeo_codigo.startsWith(p))
@@ -52,9 +67,10 @@ export function getLocalidadesByUbigeoPrefix(prefix: string): Localidad[] {
 }
 
 /** Search localidades across all text fields */
-export function searchLocalidades(query: string): Localidad[] {
+export async function searchLocalidades(query: string): Promise<Localidad[]> {
+  const records = await loadLocalidades();
   const q = query.trim().toLowerCase();
-  if (!q) return getAllLocalidades();
+  if (!q) return [...records].sort((a, b) => a.localidad.localeCompare(b.localidad));
   return records
     .filter(
       (r) =>
@@ -68,13 +84,15 @@ export function searchLocalidades(query: string): Localidad[] {
 }
 
 /** Get unique pueblo indígena names */
-export function getPueblosIndigenas(): string[] {
+export async function getPueblosIndigenas(): Promise<string[]> {
+  const records = await loadLocalidades();
   const pueblos = new Set(records.map((r) => r.pueblo_indigena));
   return [...pueblos].sort((a, b) => a.localeCompare(b));
 }
 
 /** Get unique tipo de localidad values */
-export function getTiposLocalidad(): string[] {
+export async function getTiposLocalidad(): Promise<string[]> {
+  const records = await loadLocalidades();
   const tipos = new Set(records.map((r) => r.tipo_localidad));
   return [...tipos].sort((a, b) => a.localeCompare(b));
 }

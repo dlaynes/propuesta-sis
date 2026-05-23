@@ -1,23 +1,45 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import {
   ArrowLeft, Users, Building2, School, FileText, ClipboardList,
   Info, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
-import centrosData from '../data/json/centros_poblados.json';
 import { getDistrictHierarchy } from '../services/ubigeoService';
 import type { CentroPoblado } from '../types/centro_poblado';
+import { findCentroPobladoByNum } from '../services/centroPobladoService';
 import { parseCentroPobladoInstituciones } from './utils/functions';
 
-const records: CentroPoblado[] = centrosData as CentroPoblado[];
-
-function findCentroPobladoByNum(num: string): CentroPoblado | undefined {
-  return records.find((r) => r.num === num);
-}
 export default function PueblosIndigenasCentroPoblado() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const row = id ? findCentroPobladoByNum(id) : undefined;
+  const [row, setRow] = useState<CentroPoblado | undefined>(undefined);
+  const [loading, setLoading] = useState(!!id);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    findCentroPobladoByNum(id).then((data) => {
+      if (!cancelled) {
+        setRow(data);
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <>
+        <HeroBanner title="Buscador de localidades indígenas" subtitle="Cargando..." />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sis-navy"></div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (!row) {
     return (

@@ -1,34 +1,47 @@
-import centrosData from '../data/json/centros_poblados.json';
 import type { CentroPoblado } from '../types/centro_poblado';
 
-const records: CentroPoblado[] = centrosData as CentroPoblado[];
+let centrosPromise: Promise<CentroPoblado[]> | null = null;
+
+async function loadCentrosPoblados(): Promise<CentroPoblado[]> {
+  if (!centrosPromise) {
+    centrosPromise = fetch('/data/json/centros_poblados.json')
+      .then((res) => res.json())
+      .then((data) => data as CentroPoblado[]);
+  }
+  return centrosPromise;
+}
 
 /** Get all centros poblados sorted by name */
-export function getAllCentrosPoblados(): CentroPoblado[] {
+export async function getAllCentrosPoblados(): Promise<CentroPoblado[]> {
+  const records = await loadCentrosPoblados();
   return [...records].sort((a, b) => a.centro_poblado.localeCompare(b.centro_poblado));
 }
 
 /** Find a centro poblado by its num ID */
-export function findCentroPobladoByNum(num: string): CentroPoblado | undefined {
+export async function findCentroPobladoByNum(num: string): Promise<CentroPoblado | undefined> {
+  const records = await loadCentrosPoblados();
   return records.find((r) => r.num === num.trim());
 }
 
 /** Find a centro poblado by its ubigeo code */
-export function findCentroPobladoByUbigeo(ubigeo: string): CentroPoblado | undefined {
+export async function findCentroPobladoByUbigeo(ubigeo: string): Promise<CentroPoblado | undefined> {
+  const records = await loadCentrosPoblados();
   return records.find((r) => r.ubigeo_centro_poblado_actual === ubigeo.trim());
 }
 
 /** Search centros poblados by name (case-insensitive, partial match) */
-export function searchCentrosPobladosByName(query: string): CentroPoblado[] {
+export async function searchCentrosPobladosByName(query: string): Promise<CentroPoblado[]> {
+  const records = await loadCentrosPoblados();
   const q = query.trim().toLowerCase();
-  if (!q) return getAllCentrosPoblados();
+  if (!q) return [...records].sort((a, b) => a.centro_poblado.localeCompare(b.centro_poblado));
   return records
     .filter((r) => r.centro_poblado.toLowerCase().includes(q))
     .sort((a, b) => a.centro_poblado.localeCompare(b.centro_poblado));
 }
 
 /** Search centros poblados by pueblo indígena */
-export function getCentrosPobladosByPueblo(pueblo: string): CentroPoblado[] {
+export async function getCentrosPobladosByPueblo(pueblo: string): Promise<CentroPoblado[]> {
+  const records = await loadCentrosPoblados();
   const p = pueblo.trim().toLowerCase();
   return records
     .filter((r) => r.pueblo_indigena.toLowerCase() === p)
@@ -36,7 +49,8 @@ export function getCentrosPobladosByPueblo(pueblo: string): CentroPoblado[] {
 }
 
 /** Search centros poblados by tipo de localidad */
-export function getCentrosPobladosByTipo(tipo: string): CentroPoblado[] {
+export async function getCentrosPobladosByTipo(tipo: string): Promise<CentroPoblado[]> {
+  const records = await loadCentrosPoblados();
   const t = tipo.trim().toLowerCase();
   return records
     .filter((r) => r.tipo_localidad.toLowerCase() === t)
@@ -44,7 +58,8 @@ export function getCentrosPobladosByTipo(tipo: string): CentroPoblado[] {
 }
 
 /** Search centros poblados by localidad name */
-export function getCentrosPobladosByLocalidad(localidad: string): CentroPoblado[] {
+export async function getCentrosPobladosByLocalidad(localidad: string): Promise<CentroPoblado[]> {
+  const records = await loadCentrosPoblados();
   const l = localidad.trim().toLowerCase();
   return records
     .filter((r) => r.localidad.toLowerCase().includes(l))
@@ -52,9 +67,10 @@ export function getCentrosPobladosByLocalidad(localidad: string): CentroPoblado[
 }
 
 /** Search centros poblados across all text fields */
-export function searchCentrosPoblados(query: string): CentroPoblado[] {
+export async function searchCentrosPoblados(query: string): Promise<CentroPoblado[]> {
+  const records = await loadCentrosPoblados();
   const q = query.trim().toLowerCase();
-  if (!q) return getAllCentrosPoblados();
+  if (!q) return [...records].sort((a, b) => a.centro_poblado.localeCompare(b.centro_poblado));
   return records
     .filter(
       (r) =>
@@ -69,31 +85,36 @@ export function searchCentrosPoblados(query: string): CentroPoblado[] {
 }
 
 /** Get unique pueblo indígena names */
-export function getCentroPobladoPueblos(): string[] {
+export async function getCentroPobladoPueblos(): Promise<string[]> {
+  const records = await loadCentrosPoblados();
   const pueblos = new Set(records.map((r) => r.pueblo_indigena));
   return [...pueblos].sort((a, b) => a.localeCompare(b));
 }
 
 /** Get unique tipo de localidad values */
-export function getCentroPobladoTipos(): string[] {
+export async function getCentroPobladoTipos(): Promise<string[]> {
+  const records = await loadCentrosPoblados();
   const tipos = new Set(records.map((r) => r.tipo_localidad));
   return [...tipos].sort((a, b) => a.localeCompare(b));
 }
 
 /** Get unique educación type values */
-export function getCentroPobladoEducacionTipos(): string[] {
+export async function getCentroPobladoEducacionTipos(): Promise<string[]> {
+  const records = await loadCentrosPoblados();
   const tipos = new Set(records.map((r) => r.tipo_de_educacion_impartida_en_el_centro_poblado));
   return [...tipos].filter(Boolean).sort((a, b) => a.localeCompare(b));
 }
 
 /** Get unique localidad names */
-export function getCentroPobladoLocalidades(): string[] {
+export async function getCentroPobladoLocalidades(): Promise<string[]> {
+  const records = await loadCentrosPoblados();
   const locs = new Set(records.map((r) => r.localidad));
   return [...locs].sort((a, b) => a.localeCompare(b));
 }
 
 /** Get unique ubigeo distrito actual values */
-export function getCentroPobladoDistritos(): string[] {
+export async function getCentroPobladoDistritos(): Promise<string[]> {
+  const records = await loadCentrosPoblados();
   const dists = new Set(records.map((r) => r.ubigeo_distrito_actual));
   return [...dists].sort((a, b) => a.localeCompare(b));
 }

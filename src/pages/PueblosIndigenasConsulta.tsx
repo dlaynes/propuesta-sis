@@ -120,18 +120,18 @@ export default function PueblosIndigenasConsulta() {
             {
               id: 'localidad',
               label: 'Buscador por localidad',
-              content: (
+              content: (isActive) => (
                 <Suspense fallback={<Spinner />}>
-                  <Localidades />
+                  <Localidades isActive={isActive} />
                 </Suspense>
               ),
             },
             {
               id: 'centro-poblado',
               label: 'Buscador por centro poblado',
-              content: (
+              content: (isActive) => (
                 <Suspense fallback={<Spinner />}>
-                  <CentrosPoblados />
+                  <CentrosPoblados isActive={isActive} />
                 </Suspense>
               ),
             },

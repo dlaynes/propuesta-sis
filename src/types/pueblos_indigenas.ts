@@ -1,3 +1,6 @@
+import { getAllLocalidades } from '../services/localidadService';
+import { getAllCentrosPoblados } from '../services/centroPobladoService';
+
 export interface PuebloIndigena {
   nombre: string;
   familiaLinguistica: string;
@@ -67,23 +70,20 @@ export function getFamiliaLinguistica(pueblo: string): string {
   return FAMILIA_LINGUISTICA_MAP[pueblo] || 'Diversas';
 }
 
-function filterByUbigeoPrefix(
-  records: Array<Record<string, string>>,
+function filterByUbigeoPrefix<T>(
+  records: T[],
   prefix: string | undefined,
-  field: string
-): Array<Record<string, string>> {
+  field: keyof T
+): T[] {
   if (!prefix) return records;
-  return records.filter((r) => r[field]?.startsWith(prefix));
+  return records.filter((r) => (r[field] as unknown as string)?.startsWith(prefix));
 }
 
 export async function computeResumenStats(ubigeoPrefix?: string): Promise<ResumenStats> {
-  const [{ default: localidadesData }, { default: centrosData }] = await Promise.all([
-    import('../data/json/localidades.json'),
-    import('../data/json/centros_poblados.json'),
+  const [locs, cps] = await Promise.all([
+    getAllLocalidades(),
+    getAllCentrosPoblados(),
   ]);
-
-  const locs = localidadesData as Array<Record<string, string>>;
-  const cps = centrosData as Array<Record<string, string>>;
 
   const filteredLocs = filterByUbigeoPrefix(locs, ubigeoPrefix, 'ubigeo_codigo');
   const filteredCps = filterByUbigeoPrefix(cps, ubigeoPrefix, 'ubigeo_distrito_actual');
@@ -138,13 +138,10 @@ export async function computeResumenStats(ubigeoPrefix?: string): Promise<Resume
 }
 
 export async function computePueblosStats(ubigeoPrefix?: string): Promise<PuebloIndigena[]> {
-  const [{ default: localidadesData }, { default: centrosData }] = await Promise.all([
-    import('../data/json/localidades.json'),
-    import('../data/json/centros_poblados.json'),
+  const [locs, cps] = await Promise.all([
+    getAllLocalidades(),
+    getAllCentrosPoblados(),
   ]);
-
-  const locs = localidadesData as Array<Record<string, string>>;
-  const cps = centrosData as Array<Record<string, string>>;
 
   const filteredLocs = filterByUbigeoPrefix(locs, ubigeoPrefix, 'ubigeo_codigo');
   const filteredCps = filterByUbigeoPrefix(cps, ubigeoPrefix, 'ubigeo_distrito_actual');
@@ -191,8 +188,7 @@ export async function computePueblosStats(ubigeoPrefix?: string): Promise<Pueblo
 }
 
 export async function computePoblacionBuckets(ubigeoPrefix?: string): Promise<PoblacionBucket[]> {
-  const { default: localidadesData } = await import('../data/json/localidades.json');
-  const locs = localidadesData as Array<Record<string, string>>;
+  const locs = await getAllLocalidades();
 
   const filteredLocs = filterByUbigeoPrefix(locs, ubigeoPrefix, 'ubigeo_codigo');
 
@@ -231,14 +227,14 @@ export async function computePoblacionBuckets(ubigeoPrefix?: string): Promise<Po
 }
 
 export async function computeDepartamentoStats(ubigeoPrefix?: string): Promise<DepartamentoStat[]> {
-  const [{ default: localidadesData }, { default: centrosData }, { default: departamentosData }] = await Promise.all([
-    import('../data/json/localidades.json'),
-    import('../data/json/centros_poblados.json'),
+  const [{ default: departamentosData }] = await Promise.all([
     import('../data/json/ubigeo_peru_2016_departamentos.json'),
   ]);
+  const [locs, cps] = await Promise.all([
+    getAllLocalidades(),
+    getAllCentrosPoblados(),
+  ]);
 
-  const locs = localidadesData as Array<Record<string, string>>;
-  const cps = centrosData as Array<Record<string, string>>;
   const depts = departamentosData as Array<{ id: string; name: string }>;
 
   const filteredLocs = filterByUbigeoPrefix(locs, ubigeoPrefix, 'ubigeo_codigo');

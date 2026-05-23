@@ -88,6 +88,8 @@ export function Pagination({
             <button
               key={p}
               onClick={() => handlePageChange(Number(p))}
+              aria-label={`Página ${p}`}
+              aria-current={p === currentPage ? 'page' : undefined}
               className={`px-2 py-1 rounded min-w-[32px] transition-colors ${
                 p === currentPage
                   ? 'bg-sis-navy text-white'

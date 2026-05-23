@@ -1,24 +1,45 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import {
   ArrowLeft, Users, Building2, School, FileText, ClipboardList,
   Info, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
-import localidadesData from '../data/json/localidades.json';
 import { getDistrictHierarchy } from '../services/ubigeoService';
 import type { Localidad } from '../types/localidad';
+import { findLocalidadByNum } from '../services/localidadService';
 import { parseLocalidadInstituciones } from './utils/functions';
-
-const records: Localidad[] = localidadesData as Localidad[];
-
-function findLocalidadByNum(num: string): Localidad | undefined {
-  return records.find((r) => r.num === num);
-}
 
 export default function PueblosIndigenasLocalidad() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const row = id ? findLocalidadByNum(id) : undefined;
+  const [row, setRow] = useState<Localidad | undefined>(undefined);
+  const [loading, setLoading] = useState(!!id);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    findLocalidadByNum(id).then((data) => {
+      if (!cancelled) {
+        setRow(data);
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <>
+        <HeroBanner title="Buscador de localidades indígenas" subtitle="Cargando..." />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sis-navy"></div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (!row) {
     return (

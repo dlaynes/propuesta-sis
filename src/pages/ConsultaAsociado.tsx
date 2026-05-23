@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAnnouncer } from '../hooks/useAnnouncer';
 import { AlertCircle, Search, UserCheck, FileText, Shield, Activity } from 'lucide-react';
 import { HeroBanner } from '../components/HeroBanner';
@@ -30,9 +30,7 @@ export default function ConsultaAsociado() {
   const [docTypeError, setDocTypeError] = useState('');
   const [docNumberError, setDocNumberError] = useState('');
   const [captchaError, setCaptchaError] = useState('');
-  const [formErrorSummary, setFormErrorSummary] = useState('');
 
-  const errorSummaryRef = useRef<HTMLDivElement>(null);
   const { announce } = useAnnouncer();
 
   const [result, setResult] = useState<ResultData | null>(null);
@@ -43,7 +41,6 @@ export default function ConsultaAsociado() {
     setDocTypeError('');
     setDocNumberError('');
     setCaptchaError('');
-    setFormErrorSummary('');
 
     if (!docType) {
       setDocTypeError('Seleccione un tipo de documento.');
@@ -58,12 +55,6 @@ export default function ConsultaAsociado() {
     if (!captchaValid) {
       setCaptchaError('Complete el desafío de verificación (CAPTCHA o alternativa accesible).');
       valid = false;
-    }
-
-    if (!valid) {
-      const msg = 'Por favor corrija los errores indicados en el formulario antes de continuar.';
-      setFormErrorSummary(msg);
-      setTimeout(() => errorSummaryRef.current?.focus(), 0);
     }
 
     return valid;
@@ -122,19 +113,6 @@ export default function ConsultaAsociado() {
                 <a href="#" className="text-sis-link hover:underline">aquí</a>
               </p>
 
-              {formErrorSummary && (
-                <div
-                  ref={errorSummaryRef}
-                  tabIndex={-1}
-                  role="alert"
-                  aria-live="polite"
-                  className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-sis-red flex items-start gap-2"
-                >
-                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                  <span>{formErrorSummary}</span>
-                </div>
-              )}
-
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
@@ -155,9 +133,9 @@ export default function ConsultaAsociado() {
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
-                    {docTypeError && (
-                      <p id="doc-type-error" className="mt-1 text-xs text-sis-red">{docTypeError}</p>
-                    )}
+                    <p id="doc-type-error" aria-live="polite" className="mt-1 text-xs text-sis-red">
+                      {docTypeError}
+                    </p>
                   </div>
 
                   <div>
@@ -175,28 +153,35 @@ export default function ConsultaAsociado() {
                       aria-describedby={docNumberError ? 'doc-number-error' : undefined}
                       className="w-full border border-sis-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
                     />
-                    {docNumberError && (
-                      <p id="doc-number-error" className="mt-1 text-xs text-sis-red">{docNumberError}</p>
-                    )}
+                    <p id="doc-number-error" aria-live="polite" className="mt-1 text-xs text-sis-red">
+                      {docNumberError}
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <CaptchaWidget valid={captchaValid} onValidityChange={setCaptchaValid} />
-                    {captchaError && (
-                      <p id="captcha-error" className="mt-1 text-xs text-sis-red">{captchaError}</p>
-                    )}
+                    <p id="captcha-error" aria-live="polite" className="mt-1 text-xs text-sis-red">
+                      {captchaError}
+                    </p>
+                  </div>
+
+                  <div className="text-center mt-8 md:mt-2">
+                    <button type="submit"
+                      className="inline-flex items-center justify-center bg-sis-orange py-1.5 gap-2 mt-6 w-full hover:bg-sis-orange-hover text-white font-semibold px-6 rounded transition-colors">
+                        <Search className="w-4 h-4" aria-hidden="true" />
+                        Realizar búsqueda
+                      </button>
                   </div>
                 </div>
-
-                <button
+                {/* <button
                   type="submit"
                   className="inline-flex items-center gap-2 rounded bg-sis-orange hover:bg-sis-orange-hover text-white font-semibold px-6 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-sis-orange/40"
                 >
                   <Search className="w-4 h-4" aria-hidden="true" />
                   Consultar
-                </button>
+                </button> */}
               </form>
 
               {notFound && (

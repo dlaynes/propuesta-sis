@@ -1,31 +1,43 @@
 import { Search, RotateCcw, BarChart3 } from 'lucide-react';
 import { useAnnouncer } from '../../hooks/useAnnouncer';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, startTransition } from 'react';
+import { Spinner } from '../../components/Loader';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import {
   getAllLocalidades,
-  getPueblosIndigenas,
-  getTiposLocalidad,
 } from '../../services/localidadService';
 import type { Localidad } from '../../types/localidad';
 import { parseLocalidadInstituciones } from '../utils/functions';
 
-export const Localidades = () => {
+interface LocalidadesProps { isActive?: boolean }
+
+export const Localidades = ({ isActive }: LocalidadesProps) => {
   const [nombre, setNombre] = useState('');
   const [pueblo, setPueblo] = useState('');
   const [tipo, setTipo] = useState('');
   const [georeferenciada, setGeoreferenciada] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [records, setRecords] = useState<Localidad[]>([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { announce } = useAnnouncer();
 
-  const pueblosOptions = useMemo(() => getPueblosIndigenas(), []);
-  const tiposOptions = useMemo(() => getTiposLocalidad(), []);
+  useEffect(() => {
+    if (!isActive || records.length > 0) return;
+    startTransition(() => setLoading(true));
+    getAllLocalidades().then((data) => {
+      setRecords(data);
+      setLoading(false);
+    });
+  }, [isActive, records.length]);
+
+  const pueblosOptions = useMemo(() => [...new Set(records.map((r) => r.pueblo_indigena))].sort(), [records]);
+  const tiposOptions = useMemo(() => [...new Set(records.map((r) => r.tipo_localidad))].sort(), [records]);
 
   const filteredRows = useMemo(() => {
-    let result = getAllLocalidades();
+    let result = [...records];
 
     if (nombre.trim()) {
       result = result.filter((r) =>
@@ -46,7 +58,7 @@ export const Localidades = () => {
     }
 
     return result;
-  }, [nombre, pueblo, tipo, georeferenciada]);
+  }, [records, nombre, pueblo, tipo, georeferenciada]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const paginatedRows = useMemo(() => {
@@ -92,6 +104,14 @@ export const Localidades = () => {
     if (pct >= 70) return '#22c55e';
     if (pct >= 50) return '#f59e0b';
     return '#ef4444';
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -200,6 +220,7 @@ export const Localidades = () => {
                   <th
                     key={col}
                     className="text-left font-semibold text-sis-navy px-3 py-3 whitespace-nowrap"
+                    scope="col"
                   >
                     {col}
                   </th>

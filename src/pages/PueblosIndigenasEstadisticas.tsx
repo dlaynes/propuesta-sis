@@ -292,7 +292,7 @@ export default function PueblosIndigenasEstadisticas() {
                 <thead>
                   <tr className="border-b border-sis-border">
                     {['Rango', 'N° de Localidades', '%', 'Acumulado %'].map((h) => (
-                      <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3">{h}</th>
+                      <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3" scope="col">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -388,7 +388,7 @@ export default function PueblosIndigenasEstadisticas() {
               <thead>
                 <tr className="border-b border-sis-border">
                   {['Departamento', 'N° Localidades', 'Centros Poblados', 'Población', '%'].map((h) => (
-                    <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3">{h}</th>
+                    <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3" scope="col">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -427,7 +427,7 @@ export default function PueblosIndigenasEstadisticas() {
               <thead>
                 <tr className="border-b border-sis-border">
                   {['Pueblo Indígena', 'Familia Lingüística', 'Hablantes', 'N° Localidades', '% del Total'].map((h) => (
-                    <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3">{h}</th>
+                    <th key={h} className="text-left font-semibold text-sis-navy px-3 py-3" scope="col">{h}</th>
                   ))}
                 </tr>
               </thead>
