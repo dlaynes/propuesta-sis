@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
+import { useAnnouncer } from '../hooks/useAnnouncer';
 import { HeroBanner } from '../components/HeroBanner';
 import { List, MapPin, RotateCcw, Calendar, MapPinned, MapPinHouse, Download, Search } from 'lucide-react';
 import type { Province, District } from '../types/ubigeo';
@@ -168,6 +169,7 @@ export default function LocalesEmpadronamiento() {
   const [resultados, setResultados] = useState<LocalEmpadronamiento[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [focusLoc, setFocusLoc] = useState<LocalEmpadronamiento | null>(null);
+  const { announce } = useAnnouncer();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -212,6 +214,7 @@ export default function LocalesEmpadronamiento() {
     setHasSearched(false);
     setFocusLoc(null);
     setCurrentPage(1);
+    announce('Filtros limpiados.');
   }
 
   function handleBuscar() {
@@ -244,6 +247,11 @@ export default function LocalesEmpadronamiento() {
     setHasSearched(true);
     setFocusLoc(null);
     setCurrentPage(1);
+    if (filtered.length > 0) {
+      announce('Búsqueda completada. ' + filtered.length + ' locales de empadronamiento encontrados.');
+    } else {
+      announce('Búsqueda completada. No se encontraron locales para los filtros seleccionados.');
+    }
   }
 
   function handleVerEnMapa(loc: LocalEmpadronamiento) {

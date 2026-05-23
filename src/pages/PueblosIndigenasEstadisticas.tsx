@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useAnnouncer } from '../hooks/useAnnouncer';
 import { useState, useEffect, useMemo } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import {
@@ -54,6 +55,8 @@ export default function PueblosIndigenasEstadisticas() {
   const [poblacionRows, setPoblacionRows] = useState<PoblacionBucket[]>([]);
   const [deptRows, setDeptRows] = useState<DepartamentoStat[]>([]);
 
+  const { announce } = useAnnouncer();
+
   useEffect(() => {
     Promise.all([
       computeResumenStats(ubigeoPrefix),
@@ -65,8 +68,9 @@ export default function PueblosIndigenasEstadisticas() {
       setPueblosRows(p);
       setPoblacionRows(pb);
       setDeptRows(d);
+      announce('Estadísticas actualizadas.');
     });
-  }, [ubigeoPrefix]);
+  }, [ubigeoPrefix, announce]);
 
   const chartEntries = useMemo(() => {
     const sorted = [...pueblosRows].sort((a, b) => b.localidadesCount - a.localidadesCount);

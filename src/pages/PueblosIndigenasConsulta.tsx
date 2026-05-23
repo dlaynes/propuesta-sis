@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
+import { useAnnouncer } from '../hooks/useAnnouncer';
 import { useNavigate } from 'react-router-dom';
 import { HeroBanner } from '../components/HeroBanner';
 import { TrendingUp, Users, TreePine, BarChart3, Download } from 'lucide-react';
@@ -11,11 +12,15 @@ const CentrosPoblados = lazy(() => import('./PueblosIndigenasConsulta/CentrosPob
 
 export default function PueblosIndigenasConsulta() {
   const navigate = useNavigate();
+  const { announce } = useAnnouncer();
   const [stats, setStats] = useState<ResumenStats | null>(null);
 
   useEffect(() => {
-    computeResumenStats().then(setStats);
-  }, []);
+    computeResumenStats().then((s) => {
+      setStats(s);
+      announce('Estadísticas cargadas.');
+    });
+  }, [announce]);
 
   if (!stats) {
     return (

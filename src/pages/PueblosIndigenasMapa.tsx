@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useAnnouncer } from '../hooks/useAnnouncer';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { HeroBanner } from '../components/HeroBanner';
@@ -143,6 +144,7 @@ function createCustomIcon(color: string) {
 
 export default function PueblosIndigenasMapa() {
   const navigate = useNavigate();
+  const { announce } = useAnnouncer();
   const departments = useMemo(() => getAllDepartments(), []);
 
   const [departmentId, setDepartmentId] = useState('');
@@ -213,6 +215,10 @@ export default function PueblosIndigenasMapa() {
     const poblacion = filteredLocalidades.reduce((sum, l) => sum + l.poblacion, 0);
     return { total, conEib, poblacion };
   }, [filteredLocalidades]);
+
+  useEffect(() => {
+    announce(`${stats.total} localidades indígenas mostradas en el mapa.`);
+  }, [stats.total, announce]);
 
   const activeFilterCount = [
     departmentId,

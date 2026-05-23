@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAnnouncer } from '../hooks/useAnnouncer';
 
 interface PaginationProps {
   currentPage: number;
@@ -7,6 +8,7 @@ interface PaginationProps {
   pageSize: number;
   onPageSizeChange: (size: number) => void;
   pageSizeOptions?: number[];
+  totalItems?: number;
 }
 
 function getPageNumbers(current: number, total: number): (number | string)[] {
@@ -36,8 +38,22 @@ export function Pagination({
   pageSize,
   onPageSizeChange,
   pageSizeOptions = [10, 25, 50, 100],
+  totalItems,
 }: PaginationProps) {
+  const { announce } = useAnnouncer();
   const pages = getPageNumbers(currentPage, totalPages);
+
+  const handlePageChange = (page: number) => {
+    onPageChange(page);
+    const total = totalItems ?? 0;
+    if (total > 0) {
+      const start = (page - 1) * pageSize + 1;
+      const end = Math.min(page * pageSize, total);
+      announce(`Página ${page} de ${totalPages}. Mostrando ${start}–${end} de ${total} resultados.`);
+    } else {
+      announce(`Página ${page} de ${totalPages}. No hay resultados.`);
+    }
+  };
 
   return (
     <div className="flex items-center justify-between mt-4 text-sm">
@@ -57,7 +73,7 @@ export function Pagination({
 
       <div className="flex items-center gap-1">
         <button
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage <= 1}
           className="px-2 py-1 rounded min-w-[32px] flex items-center justify-center text-sis-navy hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           aria-label="Página anterior"
@@ -71,7 +87,7 @@ export function Pagination({
           ) : (
             <button
               key={p}
-              onClick={() => onPageChange(Number(p))}
+              onClick={() => handlePageChange(Number(p))}
               className={`px-2 py-1 rounded min-w-[32px] transition-colors ${
                 p === currentPage
                   ? 'bg-sis-navy text-white'
@@ -84,7 +100,7 @@ export function Pagination({
         )}
 
         <button
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
           className="px-2 py-1 rounded min-w-[32px] flex items-center justify-center text-sis-navy hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           aria-label="Página siguiente"

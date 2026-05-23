@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { useAnnouncer } from '../hooks/useAnnouncer';
 
 export interface TabItem {
   id: string;
@@ -13,16 +14,27 @@ interface TabsProps {
 
 export function Tabs({ tabs, defaultTab }: TabsProps) {
   const [activeId, setActiveId] = useState(defaultTab ?? tabs[0]?.id);
+  const { announce } = useAnnouncer();
 
   const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0];
 
+  const handleTabChange = (tabId: string) => {
+    setActiveId(tabId);
+    const tab = tabs.find((t) => t.id === tabId);
+    if (tab) {
+      announce(`Mostrando pestaña: ${tab.label}`);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex border-b border-sis-border">
+      <div className="flex border-b border-sis-border" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveId(tab.id)}
+            role="tab"
+            aria-selected={activeId === tab.id}
+            onClick={() => handleTabChange(tab.id)}
             className={`px-5 py-3 text-sm font-semibold transition-colors relative ${
               activeId === tab.id
                 ? 'text-sis-navy'
@@ -36,7 +48,7 @@ export function Tabs({ tabs, defaultTab }: TabsProps) {
           </button>
         ))}
       </div>
-      <div className="min-h-[200px]">{activeTab?.content}</div>
+      <div role="tabpanel" className="min-h-[200px]">{activeTab?.content}</div>
     </div>
   );
 }

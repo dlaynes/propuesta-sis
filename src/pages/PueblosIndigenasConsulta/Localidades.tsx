@@ -1,5 +1,6 @@
 import { Search, RotateCcw, BarChart3 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useAnnouncer } from '../../hooks/useAnnouncer';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import {
@@ -8,7 +9,7 @@ import {
   getTiposLocalidad,
 } from '../../services/localidadService';
 import type { Localidad } from '../../types/localidad';
-import { parseLocalidadInstituciones } from '../PueblosIndigenasLocalidad';
+import { parseLocalidadInstituciones } from '../utils/functions';
 
 export const Localidades = () => {
   const [nombre, setNombre] = useState('');
@@ -18,6 +19,7 @@ export const Localidades = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
+  const { announce } = useAnnouncer();
 
   const pueblosOptions = useMemo(() => getPueblosIndigenas(), []);
   const tiposOptions = useMemo(() => getTiposLocalidad(), []);
@@ -51,6 +53,14 @@ export const Localidades = () => {
     const start = (currentPage - 1) * pageSize;
     return filteredRows.slice(start, start + pageSize);
   }, [filteredRows, currentPage, pageSize]);
+
+  useEffect(() => {
+    if (filteredRows.length > 0) {
+      announce(`${filteredRows.length} localidades encontradas.`);
+    } else {
+      announce('No se encontraron localidades para los filtros seleccionados.');
+    }
+  }, [filteredRows.length, announce]);
 
   const startIdx = (currentPage - 1) * pageSize + 1;
   const endIdx = Math.min(currentPage * pageSize, filteredRows.length);

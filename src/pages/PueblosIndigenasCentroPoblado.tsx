@@ -7,21 +7,13 @@ import {
 import centrosData from '../data/json/centros_poblados.json';
 import { getDistrictHierarchy } from '../services/ubigeoService';
 import type { CentroPoblado } from '../types/centro_poblado';
+import { parseCentroPobladoInstituciones } from './utils/functions';
 
 const records: CentroPoblado[] = centrosData as CentroPoblado[];
 
 function findCentroPobladoByNum(num: string): CentroPoblado | undefined {
   return records.find((r) => r.num === num);
 }
-
-export function parseCentroPobladoInstituciones(row: CentroPoblado) {
-  const num = parseInt(row.num_de_instituciones_educativas_en_el_centro_poblado, 10) || 0;
-  const tipos = row.tipo_de_instituciones_educativas_en_el_centro_poblado?.split('\n').filter(Boolean) || [];
-  const niveles = row.nivel_de_las_instituciones_educativas_en_el_centro_poblado?.split('\n').filter(Boolean) || [];
-  const educacion = row.tipo_de_educacion_impartida_en_el_centro_poblado?.split('\n').filter(Boolean) || [];
-  return { num, tipos, niveles, educacion };
-}
-
 export default function PueblosIndigenasCentroPoblado() {
   const navigate = useNavigate();
   const { id } = useParams();

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useAnnouncer } from '../hooks/useAnnouncer';
 import { AlertCircle, Search, UserCheck, FileText, Shield, Activity } from 'lucide-react';
 import { HeroBanner } from '../components/HeroBanner';
 import { Sidebar } from '../components/Sidebar';
@@ -24,21 +25,61 @@ interface ResultData {
 export default function ConsultaAsociado() {
   const [docType, setDocType] = useState('');
   const [docNumber, setDocNumber] = useState('');
-  const [captchaValue, setCaptchaValue] = useState('');
+  const [captchaValid, setCaptchaValid] = useState(false);
+
+  const [docTypeError, setDocTypeError] = useState('');
+  const [docNumberError, setDocNumberError] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+  const [formErrorSummary, setFormErrorSummary] = useState('');
+
+  const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const { announce } = useAnnouncer();
+
   const [result, setResult] = useState<ResultData | null>(null);
   const [notFound, setNotFound] = useState(false);
+
+  const validate = (): boolean => {
+    let valid = true;
+    setDocTypeError('');
+    setDocNumberError('');
+    setCaptchaError('');
+    setFormErrorSummary('');
+
+    if (!docType) {
+      setDocTypeError('Seleccione un tipo de documento.');
+      valid = false;
+    }
+
+    if (!docNumber.trim()) {
+      setDocNumberError('Ingrese su número de documento.');
+      valid = false;
+    }
+
+    if (!captchaValid) {
+      setCaptchaError('Complete el desafío de verificación (CAPTCHA o alternativa accesible).');
+      valid = false;
+    }
+
+    if (!valid) {
+      const msg = 'Por favor corrija los errores indicados en el formulario antes de continuar.';
+      setFormErrorSummary(msg);
+      setTimeout(() => errorSummaryRef.current?.focus(), 0);
+    }
+
+    return valid;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setResult(null);
     setNotFound(false);
-    if (!docType || !docNumber || !captchaValue) {
-      alert('Por favor complete todos los campos.');
-      return;
-    }
+
+    if (!validate()) return;
+
     const trimmed = docNumber.trim();
     if (!/^\d{8}$/.test(trimmed)) {
       setNotFound(true);
+      announce('No se encontró información para el documento ingresado.');
       return;
     }
     const affiliationId = `100${trimmed}`;
@@ -52,6 +93,7 @@ export default function ConsultaAsociado() {
       insuranceType: 'SIS GRATUITO',
       status,
     });
+    announce('Consulta completada. Resultado encontrado.');
   };
 
   return (
@@ -80,14 +122,32 @@ export default function ConsultaAsociado() {
                 <a href="#" className="text-sis-link hover:underline">aquí</a>
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              {formErrorSummary && (
+                <div
+                  ref={errorSummaryRef}
+                  tabIndex={-1}
+                  role="alert"
+                  aria-live="polite"
+                  className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-sis-red flex items-start gap-2"
+                >
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                  <span>{formErrorSummary}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label htmlFor="doc-type" className="block text-sm font-semibold text-sis-navy mb-1">Tipo de Documento</label>
+                    <label htmlFor="doc-type" className="block text-sm font-semibold text-sis-navy mb-1">
+                      Tipo de Documento
+                    </label>
                     <select
                       id="doc-type"
                       value={docType}
-                      onChange={(e) => setDocType(e.target.value)}
+                      onChange={(e) => { setDocType(e.target.value); setDocTypeError(''); }}
+                      aria-required="true"
+                      aria-invalid={!!docTypeError}
+                      aria-describedby={docTypeError ? 'doc-type-error' : undefined}
                       className="w-full border border-sis-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30 bg-white"
                     >
                       <option value="">Seleccione tipo de documento</option>
@@ -95,40 +155,55 @@ export default function ConsultaAsociado() {
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
+                    {docTypeError && (
+                      <p id="doc-type-error" className="mt-1 text-xs text-sis-red">{docTypeError}</p>
+                    )}
                   </div>
 
                   <div>
-                    <label htmlFor="doc-number" className="block text-sm font-semibold text-sis-navy mb-1">Número de Documento</label>
+                    <label htmlFor="doc-number" className="block text-sm font-semibold text-sis-navy mb-1">
+                      Número de Documento
+                    </label>
                     <input
                       id="doc-number"
                       type="text"
                       value={docNumber}
-                      onChange={(e) => setDocNumber(e.target.value)}
+                      onChange={(e) => { setDocNumber(e.target.value); setDocNumberError(''); }}
                       placeholder="Ingrese su número de documento"
+                      aria-required="true"
+                      aria-invalid={!!docNumberError}
+                      aria-describedby={docNumberError ? 'doc-number-error' : undefined}
                       className="w-full border border-sis-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sis-navy/30"
                     />
+                    {docNumberError && (
+                      <p id="doc-number-error" className="mt-1 text-xs text-sis-red">{docNumberError}</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <CaptchaWidget value={captchaValue} onChange={setCaptchaValue} />
-
-                  <div className="text-center mt-8 md:mt-2">
-                    <button
-                      type="submit"
-                      className="bg-sis-orange mt-6 w-full hover:bg-sis-orange-hover text-white font-semibold py-1.5 px-6 rounded transition-colors"
-                    >
-                      Realizar búsqueda
-                    </button>
+                  <div>
+                    <CaptchaWidget valid={captchaValid} onValidityChange={setCaptchaValid} />
+                    {captchaError && (
+                      <p id="captcha-error" className="mt-1 text-xs text-sis-red">{captchaError}</p>
+                    )}
                   </div>
                 </div>
+
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded bg-sis-orange hover:bg-sis-orange-hover text-white font-semibold px-6 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-sis-orange/40"
+                >
+                  <Search className="w-4 h-4" aria-hidden="true" />
+                  Consultar
+                </button>
               </form>
 
               {notFound && (
-                <div className="mt-6 rounded-lg border border-sis-red/20 bg-red-50 p-5 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-sis-red shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="mt-6 rounded border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-sis-red mt-0.5 shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-sis-red">No se encontró información</p>
+                    <p className="font-semibold text-sis-red">No se encontró información</p>
                     <p className="text-sm text-sis-text-light mt-1">
                       No existe registro de asegurado para el documento ingresado. Verifique el número y el tipo, luego vuelva a intentarlo.
                     </p>
@@ -222,7 +297,6 @@ export default function ConsultaAsociado() {
             <div className="mt-8">
               <img src="/banner.jpeg" alt="Banner" className="w-full h-auto" />
             </div>
-
           </div>
         </div>
       </div>

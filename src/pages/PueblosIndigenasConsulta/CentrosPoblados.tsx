@@ -1,5 +1,6 @@
 import { Search, RotateCcw, BarChart3 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useAnnouncer } from '../../hooks/useAnnouncer';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pagination } from '../../components/Pagination';
 import {
@@ -10,7 +11,7 @@ import {
   getCentroPobladoEducacionTipos,
 } from '../../services/centroPobladoService';
 import type { CentroPoblado } from '../../types/centro_poblado';
-import { parseCentroPobladoInstituciones } from '../PueblosIndigenasCentroPoblado';
+import { parseCentroPobladoInstituciones } from '../utils/functions';
 
 export const CentrosPoblados = () => {
   const [nombre, setNombre] = useState('');
@@ -21,6 +22,7 @@ export const CentrosPoblados = () => {
   const [pageSize, setPageSize] = useState(10);
   const navigate = useNavigate();
 
+  const { announce } = useAnnouncer();
   const pueblosOptions = useMemo(() => getCentroPobladoPueblos(), []);
   const tiposOptions = useMemo(() => getCentroPobladoTipos(), []);
   const educacionOptions = useMemo(() => getCentroPobladoEducacionTipos(), []);
@@ -61,6 +63,14 @@ export const CentrosPoblados = () => {
     const start = (currentPage - 1) * pageSize;
     return filteredRows.slice(start, start + pageSize);
   }, [filteredRows, currentPage, pageSize]);
+
+  useEffect(() => {
+    if (filteredRows.length > 0) {
+      announce(`${filteredRows.length} centros poblados encontrados.`);
+    } else {
+      announce('No se encontraron centros poblados para los filtros seleccionados.');
+    }
+  }, [filteredRows.length, announce]);
 
   const startIdx = (currentPage - 1) * pageSize + 1;
   const endIdx = Math.min(currentPage * pageSize, filteredRows.length);
