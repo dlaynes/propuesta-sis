@@ -105,7 +105,7 @@ function DiasAtencion({ dias }: { dias: string }) {
               className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold leading-none select-none ${
                 isActive
                   ? 'bg-sis-navy text-white'
-                  : 'bg-gray-100 text-gray-300'
+                  : 'bg-gray-100 text-gray-500'
               }`}
             >
               {day.label}

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Heart, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const topLinks = [
   { label: 'Portal Afiliados', href: '#' },
@@ -43,9 +43,49 @@ export function TopNav() {
 
 export function MainNav() {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const focusables = container.querySelectorAll<HTMLElement>(
+      'button, a[href], [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusables.length === 0) return;
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    // Move focus to first menu link when opening
+    if (first !== document.activeElement) {
+      first.focus();
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open]);
 
   return (
-    <div className="bg-sis-navy border-t border-white/10">
+    <div ref={containerRef} className="bg-sis-navy border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4">
         <button
           className="md:hidden text-white py-3 flex items-center gap-2"

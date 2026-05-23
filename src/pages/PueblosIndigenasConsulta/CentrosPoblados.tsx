@@ -270,6 +270,7 @@ export const CentrosPoblados = ({ isActive }: CentrosPobladosProps) => {
                       <button
                         onClick={() => navigate('/pueblos-indigenas/centro-poblado/'+row.num)}
                         className="text-sis-navy hover:text-sis-link text-xs font-medium underline cursor-pointer"
+                        aria-label={`Ver detalle de centro poblado ${row.centro_poblado}`}
                       >
                         Ver
                       </button>

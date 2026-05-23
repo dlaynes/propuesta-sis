@@ -106,6 +106,12 @@ export const Localidades = ({ isActive }: LocalidadesProps) => {
     return '#ef4444';
   }
 
+  function getLenguaLabel(pct: number): string {
+    if (pct >= 70) return 'Alto';
+    if (pct >= 50) return 'Medio';
+    return 'Bajo';
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -247,13 +253,15 @@ export const Localidades = ({ isActive }: LocalidadesProps) => {
                     <td className="px-3 py-3 text-sis-text-light">{parseInt(row.total_poblacion, 10).toLocaleString()}</td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden" aria-hidden="true">
                           <div
                             className="h-full rounded-full"
                             style={{ width: `${lenguaPct}%`, backgroundColor: getLenguaColor(lenguaPct) }}
                           />
                         </div>
-                        <span className="text-xs text-sis-text-light">{lenguaPct.toFixed(2)}%</span>
+                        <span className="text-xs text-sis-text-light">
+                          {lenguaPct.toFixed(2)}% — {getLenguaLabel(lenguaPct)}
+                        </span>
                       </div>
                     </td>
                     <td className="px-3 py-3 text-sis-text-light">
@@ -276,6 +284,7 @@ export const Localidades = ({ isActive }: LocalidadesProps) => {
                       <button
                         onClick={() => navigate('/pueblos-indigenas/localidad/'+row.num)}
                         className="text-sis-navy hover:text-sis-link text-xs font-medium underline cursor-pointer"
+                        aria-label={`Ver detalle de localidad ${row.localidad}`}
                       >
                         Ver
                       </button>

@@ -279,8 +279,8 @@ export default function ConsultaAsociado() {
           <div>
             <Sidebar />
 
-            <div className="mt-8">
-              <img src="/banner.jpeg" alt="Banner" className="w-full h-auto" />
+            <div className="mt-8" aria-hidden="true">
+              <img src="/banner.jpeg" alt="Sistema Integral de Salud del Perú" className="w-full h-auto" />
             </div>
           </div>
         </div>

@@ -50,7 +50,7 @@ export function Sidebar() {
             <li key={l.label}>
               <a href={l.href || '#'} className={`${baseClass} ${activeClass}`} target={l.target || undefined} rel={l.target === '_blank' ? 'noopener noreferrer' : undefined}>
                 {l.label}
-                {l.target === '_blank' && <ExternalLink name="external-link" className="inline-block ml-1" aria-hidden="true" />}
+                {l.target === '_blank' && <ExternalLink className="inline-block ml-1" aria-hidden="true" />}
               </a>
             </li>
           );

@@ -51,6 +51,7 @@ export function CaptchaWidget({ valid, onValidityChange }: CaptchaWidgetProps) {
         <span
           className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-sis-navy text-[10px] cursor-help"
           title="Ingrese el código mostrado o responda la alternativa accesible"
+          role="img"
           aria-label="Información: ingrese el código mostrado en la imagen o responda la pregunta alternativa accesible"
         >
           i
