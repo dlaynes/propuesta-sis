@@ -10,6 +10,7 @@ export interface Department {
 export interface Province {
   id: string;
   name: string;
+  alternate_name?: string;
   department_id: string;
 }
 
@@ -21,5 +22,5 @@ export interface District {
   department_id: string;
   lat: number;
   lng: number;
-  alternate_name?: string; // Optional field for alternate names
+  alternate_name?: string;
 }
