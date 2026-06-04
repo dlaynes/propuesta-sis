@@ -32,6 +32,8 @@ import L from 'leaflet';
 const COLOR_PALETTE = [
   '#22c55e', '#3b82f6', '#e07020', '#8b5cf6', '#eab308',
   '#ef4444', '#06b6d4', '#f97316', '#84cc16', '#d946ef',
+  '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#14b8a6',
+  '#f43f5e', '#0ea5e9', '#fbbf24', '#a855f7', '#16a34a',
 ];
 
 function computePuebloColors(localidades: LocalidadMarker[]): Record<string, string> {
