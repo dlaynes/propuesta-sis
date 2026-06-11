@@ -121,7 +121,18 @@ export default function PueblosIndigenasEstadisticas() {
   }, [pueblosRows]);
 
   const handleRegionClick = (deptCode: string) => {
-    setSelectedRegion((prev) => (prev === deptCode ? null : deptCode));
+    if (selectedRegion === deptCode) {
+      setSelectedRegion(null);
+      announce('Selección eliminada.');
+    } else {
+      setSelectedRegion(deptCode);
+      const dept = deptRows.find((d) => d.codigo === deptCode);
+      if (dept) {
+        announce(`${dept.nombre}: ${dept.localidades.toLocaleString()} localidades, ${dept.centrosPoblados.toLocaleString()} centros poblados, ${dept.porcentaje}% de hablantes indígenas.`);
+      } else {
+        announce('Región seleccionada.');
+      }
+    }
   };
 
   const selectedDept = selectedRegion ? deptRows.find((d) => d.codigo === selectedRegion) : undefined;
