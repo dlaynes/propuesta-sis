@@ -1,6 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAnnouncer } from '../hooks/useAnnouncer';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { HeroBanner } from '../components/HeroBanner';
 import {
   BarChart3,
@@ -19,6 +19,9 @@ import {
 } from '../services/ubigeoService';
 import { Pagination } from '../components/Pagination';
 import PeruMap from '../components/PeruMap/PeruMap';
+import { computeDepartmentHeatColors } from '../utils/departmentHeatColors';
+import { Box, Map as MapIcon } from 'lucide-react';
+import { Spinner } from '../components/Loader';
 import {
   computeResumenStats,
   computePueblosStats,
@@ -32,37 +35,10 @@ import {
 
 const OTROS_OFFSET = 10; // Número de pueblos a mostrar antes de agrupar en "Otros"
 
-function hexToRgb(hex: string): [number, number, number] {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
-    : [0, 0, 0];
-}
+const PeruMap3DLazy = lazy(() =>
+  import('../components/PeruMap3D/PeruMap3D').then((m) => ({ default: m.PeruMap3D }))
+);
 
-function rgbToHex(r: number, g: number, b: number): string {
-  return `#${[r, g, b].map((x) => Math.round(x).toString(16).padStart(2, '0')).join('')}`;
-}
-
-function interpolateColor(color1: string, color2: string, factor: number): string {
-  const [r1, g1, b1] = hexToRgb(color1);
-  const [r2, g2, b2] = hexToRgb(color2);
-  return rgbToHex(
-    r1 + (r2 - r1) * factor,
-    g1 + (g2 - g1) * factor,
-    b1 + (b2 - b1) * factor
-  );
-}
-
-function computeDepartmentHeatMap(deptRows: DepartamentoStat[]): Record<string, string> {
-  if (deptRows.length === 0) return {};
-  const max = Math.max(...deptRows.map((d) => d.localidades));
-  const fills: Record<string, string> = {};
-  for (const row of deptRows) {
-    const intensity = max > 0 ? row.localidades / max : 0;
-    fills[row.codigo] = interpolateColor('#f0fdf4', '#15803d', intensity);
-  }
-  return fills;
-}
 
 export default function PueblosIndigenasEstadisticas() {
   const navigate = useNavigate();
@@ -75,6 +51,25 @@ export default function PueblosIndigenasEstadisticas() {
   const [pueblosPage, setPueblosPage] = useState(1);
   const [pueblosPageSize, setPueblosPageSize] = useState(10);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+const [searchParams, setSearchParams] = useSearchParams();
+const [view3D, setView3D] = useState<boolean>(() => searchParams.get('view') === '3d');
+const { announce: announceForToggle } = useAnnouncer();
+
+const toggleView = () => {
+  setView3D((prev) => {
+    const next = !prev;
+    const params = new URLSearchParams(searchParams);
+    if (next) {
+      params.set('view', '3d');
+      announceForToggle('Visualización 3D activada. Use el puntero del mouse o los dedos para rotar el mapa.');
+    } else {
+      params.delete('view');
+      announceForToggle('Visualización 2D activada.');
+    }
+    setSearchParams(params, { replace: true });
+    return next;
+  });
+};
 
   // Derive ubigeo prefix from dropdown selection
   const ubigeoPrefix = useMemo(() => {
@@ -433,20 +428,60 @@ export default function PueblosIndigenasEstadisticas() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
           <div className="bg-white rounded-lg border border-sis-border p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h3 className="font-bold text-sis-navy">Mapa de Calor — Localidades por Departamento</h3>
+              <div
+                className="inline-flex items-center rounded border border-sis-border overflow-hidden"
+                role="group"
+                aria-label="Cambiar el modo de visualización del mapa"
+              >
+                <button
+                  type="button"
+                  onClick={() => { if (view3D) toggleView(); }}
+                  aria-pressed={!view3D}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold transition-colors ${!view3D ? 'bg-sis-navy text-white' : 'bg-white text-sis-navy hover:bg-sis-bg'}`}
+                >
+                  <MapIcon className="w-4 h-4" aria-hidden="true" />
+                  2D
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { if (!view3D) toggleView(); }}
+                  aria-pressed={view3D}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold transition-colors border-l border-sis-border ${view3D ? 'bg-sis-navy text-white' : 'bg-white text-sis-navy hover:bg-sis-bg'}`}
+                >
+                  <Box className="w-4 h-4" aria-hidden="true" />
+                  3D / XR
+                </button>
+              </div>
             </div>
             <div className="h-[400px] w-full">
-              <PeruMap
-                activeRegion={selectedRegion ?? undefined}
-                departmentFills={computeDepartmentHeatMap(deptRows) as Record<string, string>}
-                departmentStrokes={Object.fromEntries(deptRows.map((r) => [r.codigo, '#166534'])) as Record<string, string>}
-                departmentOpacities={Object.fromEntries(deptRows.map((r) => [r.codigo, 0.9])) as Record<string, number>}
-                onRegionClick={handleRegionClick}
-                title={null}
-                width={600}
-                height={400}
-              />
+              {view3D ? (
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <Spinner />
+                    </div>
+                  }
+                >
+                  <PeruMap3DLazy
+                    deptRows={deptRows}
+                    activeRegion={selectedRegion ?? undefined}
+                    onRegionClick={handleRegionClick}
+                  />
+                </Suspense>
+              ) : (
+                <PeruMap
+                  activeRegion={selectedRegion ?? undefined}
+                  departmentFills={computeDepartmentHeatColors(deptRows) as Record<string, string>}
+                  departmentStrokes={Object.fromEntries(deptRows.map((r) => [r.codigo, '#166534'])) as Record<string, string>}
+                  departmentOpacities={Object.fromEntries(deptRows.map((r) => [r.codigo, 0.9])) as Record<string, number>}
+                  onRegionClick={handleRegionClick}
+                  title={null}
+                  width={600}
+                  height={400}
+                />
+              )}
             </div>
             <div className="flex items-center justify-center gap-4 mt-3">
               <div className="flex items-center gap-2 text-xs text-sis-text-light">
