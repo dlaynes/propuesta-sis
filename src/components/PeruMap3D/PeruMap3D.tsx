@@ -132,8 +132,8 @@ function CenteringGroup({ children, centre }: CenteringGroupProps) {
   return (
     <group rotation={[-Math.PI / 2, 0, 0]}>
       <group
-        scale={[0.012, -0.012, 1]}
-        position={[-0.012 * centre.x, 0.012 * centre.y, 0]}
+        scale={[0.01, -0.01, 1]}
+        position={[-0.01 * centre.x, 0.01 * centre.y, 0]}
       >
         {children}
       </group>
@@ -195,7 +195,12 @@ function Scene({ deptRows, activeRegion, onRegionClick, colors, maxExtrusionHeig
       {/* A faint ground plane anchors the map in space. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
         <planeGeometry args={[8, 8]} />
-        <meshStandardMaterial side={THREE.DoubleSide} color="#f0f2f5" roughness={0.95} />
+        <meshStandardMaterial
+          side={THREE.DoubleSide}
+          color="#7dd3fc"           /* sky-300 — light sky blue */
+          roughness={0.95}
+          metalness={0}
+        />
       </mesh>
     </>
   );
