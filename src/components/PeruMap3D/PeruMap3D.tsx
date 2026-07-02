@@ -40,13 +40,13 @@ function DepartmentMesh({ code, shapes, depth, color, isActive, onClick, hoverEn
   useFrame(() => {
     if (!meshRef.current) return;
     const target = isActive ? depth * 1.15 : depth;
-    meshRef.current.scale.y = THREE.MathUtils.lerp(meshRef.current.scale.y, target, 0.1);
+    meshRef.current.scale.z = THREE.MathUtils.lerp(meshRef.current.scale.z, target, 0.1);
   });
 
   return (
     <mesh
       ref={meshRef}
-      scale={[1, depth, 1]}
+      scale={[1, 1, depth]}
       position={[0, 0, 0]}
       onClick={(e) => {
         e.stopPropagation();
@@ -62,17 +62,15 @@ function DepartmentMesh({ code, shapes, depth, color, isActive, onClick, hoverEn
         document.body.style.cursor = 'default';
       }}
     >
-      {shapes.map((shape, i) => (
-        <extrudeGeometry
-          key={i}
-          args={[
-            shape,
-            { depth: 1, bevelEnabled: false, steps: 1 },
-          ]}
-        />
-      ))}
+      {/* ExtrudeGeometry accepts a Shape | Shape[]; passing the whole
+          array extrudes every subpath (e.g. Puno's island + mainland) into
+          ONE geometry so nothing is silently dropped by mesh.geometry. */}
+      <extrudeGeometry
+        args={[shapes, { depth: 1, bevelEnabled: false, steps: 1 }]}
+      />
       <meshStandardMaterial
         color={color}
+        side={THREE.DoubleSide}
         emissive={isActive ? '#22d3ee' : color}
         emissiveIntensity={emissiveIntensity}
         roughness={0.55}
@@ -91,30 +89,56 @@ function useScaledShapes() {
   return useMemo(() => {
     const loader = new SVGLoader();
     const out: Array<{ code: string; shapes: THREE.Shape[] }> = [];
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (const [code, d] of Object.entries(DEPARTMENT_PATHS)) {
-      const result = loader.parse(d);
+      // SVGLoader.parse() expects a full SVG document (it uses DOMParser
+      // internally), not a bare path 'd' string. Wrap each department path in
+      // a minimal <svg><path/></svg> document so the parser finds the node.
+      const svgDoc = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 800"><path d="${d}" fill="#000"/></svg>`;
+      const result = loader.parse(svgDoc);
       const shapes: THREE.Shape[] = [];
       for (const sp of result.paths) {
         const s = SVGLoader.createShapes(sp);
         shapes.push(...s);
       }
       out.push({ code, shapes });
+      // Accumulate the bounding box (in raw SVG coordinates) so the whole
+      // map can be centred without a runtime Box3 sweep.
+      for (const shape of shapes) {
+        for (const p of shape.getPoints()) {
+          if (p.x < minX) minX = p.x;
+          if (p.y < minY) minY = p.y;
+          if (p.x > maxX) maxX = p.x;
+          if (p.y > maxY) maxY = p.y;
+        }
+      }
     }
-    return out;
+    const centre = { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+    return { departments: out, centre };
   }, []);
 }
 
-function CenteringGroup({ children }: { children: React.ReactNode }) {
-  // Compute bounding box of all geometry and translate so centre is at (0, 0, 0).
-  const groupRef = useRef<THREE.Group>(null);
-  useEffect(() => {
-    if (!groupRef.current) return;
-    const box = new THREE.Box3().setFromObject(groupRef.current);
-    const centre = new THREE.Vector3();
-    box.getCenter(centre);
-    groupRef.current.position.set(-centre.x, 0, -centre.z);
-  }, []);
-  return <group ref={groupRef} scale={[0.012, 1, 0.012]}>{children}</group>;
+interface CenteringGroupProps {
+  children: React.ReactNode;
+  centre: { x: number; y: number };
+}
+
+function CenteringGroup({ children, centre }: CenteringGroupProps) {
+  // Lay the map flat: rotate -90° about X so the shape's XY plane becomes the
+  // ground (XZ) and the extrusion (local +Z) points up (+Y). Scale SVG units
+  // to scene units (0.012) and flip Y (SVG +Y is down). Position offsets by
+  // the precomputed SVG centre so the map is centred on the origin and its
+  // base rests at y = 0 — above the ground plane.
+  return (
+    <group rotation={[-Math.PI / 2, 0, 0]}>
+      <group
+        scale={[0.012, -0.012, 1]}
+        position={[-0.012 * centre.x, 0.012 * centre.y, 0]}
+      >
+        {children}
+      </group>
+    </group>
+  );
 }
 
 interface SceneProps {
@@ -127,7 +151,7 @@ interface SceneProps {
 }
 
 function Scene({ deptRows, activeRegion, onRegionClick, colors, maxExtrusionHeight, hoverEnabled }: SceneProps) {
-  const departments = useScaledShapes();
+  const { departments, centre } = useScaledShapes();
   const lookup = useMemo(() => {
     const map: Record<string, DepartamentoStat> = {};
     for (const row of deptRows) map[row.codigo] = row;
@@ -144,8 +168,9 @@ function Scene({ deptRows, activeRegion, onRegionClick, colors, maxExtrusionHeig
       <directionalLight position={[5, 8, 5]} intensity={0.8} castShadow />
       <directionalLight position={[-5, 4, -3]} intensity={0.3} />
 
-      <CenteringGroup>
-        {departments.map(({ code, shapes }) => {
+      <CenteringGroup centre={centre}>
+        {departments
+          .map(({ code, shapes }) => {
           if (shapes.length === 0) return null;
           const stat = lookup[code];
           const ratio = stat ? stat.localidades / max : 0;
@@ -170,7 +195,7 @@ function Scene({ deptRows, activeRegion, onRegionClick, colors, maxExtrusionHeig
       {/* A faint ground plane anchors the map in space. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
         <planeGeometry args={[8, 8]} />
-        <meshStandardMaterial color="#f0f2f5" roughness={0.95} />
+        <meshStandardMaterial side={THREE.DoubleSide} color="#f0f2f5" roughness={0.95} />
       </mesh>
     </>
   );
@@ -221,9 +246,9 @@ export function PeruMap3D({ deptRows, activeRegion, onRegionClick }: PeruMap3DCa
       aria-label={ariaLabel}
     >
       <Canvas
-        shadows
+        shadows={{ type: THREE.PCFShadowMap }}
         dpr={[1, 2]}
-        camera={{ position: [0, 5, 5], fov: 45 }}
+        camera={{ position: [0, 6, 7], fov: 45 }}
       >
         <Suspense fallback={null}>
           {store ? (
@@ -233,7 +258,7 @@ export function PeruMap3D({ deptRows, activeRegion, onRegionClick }: PeruMap3DCa
                 activeRegion={activeRegion}
                 onRegionClick={handleClick}
                 colors={colors}
-                maxExtrusionHeight={4}
+                maxExtrusionHeight={2}
                 hoverEnabled={true}
               />
               <IfInSessionMode deny="immersive-ar">
@@ -246,12 +271,12 @@ export function PeruMap3D({ deptRows, activeRegion, onRegionClick }: PeruMap3DCa
               activeRegion={activeRegion}
               onRegionClick={handleClick}
               colors={colors}
-              maxExtrusionHeight={4}
+              maxExtrusionHeight={2}
               hoverEnabled={true}
             />
           )}
         </Suspense>
-        <OrbitControls makeDefault enablePan={false} minDistance={2.5} maxDistance={12} target={[0, 0.5, 0]} />
+        <OrbitControls makeDefault enablePan={false} minDistance={2.5} maxDistance={12} target={[0, 0, 0]} />
       </Canvas>
       {store && <WebXRControls store={store} />}
     </div>

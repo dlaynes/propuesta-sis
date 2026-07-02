@@ -10,6 +10,7 @@ import {
   BookOpen,
   GraduationCap,
   ArrowLeft,
+  Box, Map as MapIcon 
 } from 'lucide-react';
 import type { Province, District } from '../types/ubigeo';
 import {
@@ -20,7 +21,6 @@ import {
 import { Pagination } from '../components/Pagination';
 import PeruMap from '../components/PeruMap/PeruMap';
 import { computeDepartmentHeatColors } from '../utils/departmentHeatColors';
-import { Box, Map as MapIcon } from 'lucide-react';
 import { Spinner } from '../components/Loader';
 import {
   computeResumenStats,
@@ -53,6 +53,7 @@ export default function PueblosIndigenasEstadisticas() {
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 const [searchParams, setSearchParams] = useSearchParams();
 const [view3D, setView3D] = useState<boolean>(() => searchParams.get('view') === '3d');
+  const [loading3D, setLoading3D] = useState(false);
 const { announce: announceForToggle } = useAnnouncer();
 
 const toggleView = () => {
@@ -61,10 +62,13 @@ const toggleView = () => {
     const params = new URLSearchParams(searchParams);
     if (next) {
       params.set('view', '3d');
+      setLoading3D(true);
       announceForToggle('Visualización 3D activada. Use el puntero del mouse o los dedos para rotar el mapa.');
+      window.setTimeout(() => setLoading3D(false), 600);
     } else {
       params.delete('view');
       announceForToggle('Visualización 2D activada.');
+      setLoading3D(false);
     }
     setSearchParams(params, { replace: true });
     return next;
@@ -455,11 +459,20 @@ const toggleView = () => {
                 </button>
               </div>
             </div>
-            <div className="h-[400px] w-full">
+            <div
+              className="h-[400px] w-full"
+              role="region"
+              aria-busy={view3D && loading3D}
+              aria-label="Mapa de calor por departamento"
+            >
               {view3D ? (
                 <Suspense
                   fallback={
-                    <div className="flex items-center justify-center h-full">
+                    <div
+                      className="flex items-center justify-center h-full"
+                      role="status"
+                      aria-live="polite"
+                    >
                       <Spinner />
                     </div>
                   }

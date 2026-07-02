@@ -100,6 +100,7 @@ export default function PueblosIndigenasMapa() {
   const [activeLayers, setActiveLayers] = useState<string[]>([]);
   const [localidadesData, setLocalidadesData] = useState<LocalidadMarker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(true);
 
   useEffect(() => {
     getAllLocalidades().then((records) => {
@@ -172,6 +173,8 @@ export default function PueblosIndigenasMapa() {
     setTipoFilter('Todas');
     setSelectedLocality(null);
     setActiveLayers(Object.keys(puebloColors));
+    setShowAll(true);
+    announce('Filtros restablecidos. Mostrando todos los marcadores y todos los pueblos.');
   }
 
   function toggleLayer(pueblo: string) {
@@ -182,7 +185,24 @@ export default function PueblosIndigenasMapa() {
 
   const puebloColors = computePuebloColors(localidadesData);
 
+  const allPuebloKeys = Object.keys(puebloColors);
+  const allSelected = allPuebloKeys.length > 0 && allPuebloKeys.every((p) => activeLayers.includes(p));
+
+  function toggleAllLayers() {
+    if (allSelected) {
+      setActiveLayers([]);
+      announce('Ningún pueblo indígena seleccionado en el mapa.');
+    } else {
+      setActiveLayers(allPuebloKeys);
+      const total = allPuebloKeys.length;
+      announce(
+        `Mostrando los ${total} pueblos indígenas en el mapa.`
+      );
+    }
+  }
+
   const filteredLocalidades = useMemo(() => {
+    if (!showAll) return [] as LocalidadMarker[];
     return localidadesData.filter((loc) => {
       if (departmentId && loc.departamento !== departments.find((d) => d.id === departmentId)?.name) return false;
       if (provinceId && loc.provincia !== provinces.find((p) => p.id === provinceId)?.name) return false;
@@ -191,7 +211,7 @@ export default function PueblosIndigenasMapa() {
       if (!isPuebloVisible(loc.pueblo, puebloColors, activeLayers)) return false;
       return true;
     });
-  }, [localidadesData, departmentId, provinceId, districtId, tipoFilter, activeLayers, puebloColors, departments, provinces, districts]);
+  }, [showAll, localidadesData, departmentId, provinceId, districtId, tipoFilter, activeLayers, puebloColors, departments, provinces, districts]);
 
   const stats = useMemo(() => {
     const total = filteredLocalidades.length;
@@ -252,8 +272,10 @@ export default function PueblosIndigenasMapa() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
           <div>
             <h2 className="text-xl font-bold text-sis-navy">Mapa Interactivo de localidades</h2>
-            <p className="text-sm text-sis-text-light">
-              {stats.total} localidades visibles | {stats.poblacion.toLocaleString()} habitantes
+            <p className="text-sm text-sis-text-light" aria-live="polite">
+              {showAll
+                ? `${stats.total} localidades visibles | ${stats.poblacion.toLocaleString()} habitantes`
+                : `Marcadores ocultos | ${localidadesData.length} localidades disponibles`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -330,7 +352,7 @@ export default function PueblosIndigenasMapa() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3">
             <div className="bg-white rounded-lg border border-sis-border overflow-hidden">
-              <div className="h-[500px] w-full relative">
+              <div className="h-[600px] w-full relative">
                 <MapContainer
                   center={[-9.19, -75.015]}
                   zoom={5}
@@ -368,9 +390,23 @@ export default function PueblosIndigenasMapa() {
 
               {/* Leyenda */}
               <div className="bg-white border-t border-sis-border p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Layers className="w-4 h-4 text-sis-navy" />
-                  <h4 className="font-bold text-sis-navy text-sm">Leyenda — Pueblos Indígenas <small>(Clic para filtrar)</small></h4>
+                <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-sis-navy" />
+                    <h4 className="font-bold text-sis-navy text-sm">Leyenda — Pueblos Indígenas <small>(Clic para filtrar)</small></h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={toggleAllLayers}
+                    aria-pressed={allSelected}
+                    className={`text-xs font-semibold border rounded px-2 py-1 transition-colors ${
+                      allSelected
+                        ? 'bg-sis-navy text-white border-sis-navy hover:bg-sis-navy-dark'
+                        : 'bg-white text-sis-navy border-sis-border hover:bg-gray-50'
+                    }`}
+                  >
+                    {allSelected ? 'Ocultar todos' : 'Mostrar todos'}
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(puebloColors).map(([pueblo, color]) => (

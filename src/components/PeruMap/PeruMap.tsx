@@ -153,6 +153,8 @@ export default function PeruMap({
       height={height}
       className="w-full h-full transform transition-all duration-100 cursor-default"
       style={{ background: "transparent", transform: "none" }}
+      role="img"
+      aria-label="Mapa de los 25 departamentos del Perú. Use el cursor o el teclado para seleccionar una región."
     >
       <g transform="scale(1) translate(0,0)" style={{ transformOrigin: "350px 400px 0px" }}>
         <g>
