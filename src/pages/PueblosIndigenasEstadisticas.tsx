@@ -263,10 +263,11 @@ const toggleView = () => {
             <p className="text-sm text-sis-text-light">Generado desde los datos censales</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-2 px-4 rounded text-sm transition-colors flex items-center gap-1.5">
+            <a className="bg-sis-navy hover:bg-sis-navy-light text-white font-medium py-2 px-4 rounded text-sm transition-colors flex items-center gap-1.5"
+              href="/data/excel/5660105-rm-020-2018-mc_sig.xlsx">
               <Download className="w-3.5 h-3.5" />
               Descargar Reporte Completo
-            </button>
+            </a>
           </div>
         </div>
 

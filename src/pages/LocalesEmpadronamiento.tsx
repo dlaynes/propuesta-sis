@@ -361,7 +361,7 @@ export default function LocalesEmpadronamiento() {
               <RotateCcw className="w-4 h-4" />
               Limpiar
             </button>
-            <a href="#" className="text-sis-navy text-sm text-bold py-2 px-4 rounded transition-colors flex items-center gap-2">
+            <a href="/data/excel/5660058-directorio-nacional-ule-2024-14-6-24.xlsx" className="text-sis-navy text-sm text-bold py-2 px-4 rounded transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" />
               Descargar Reporte Completo
             </a>
